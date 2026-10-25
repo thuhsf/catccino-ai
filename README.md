@@ -45,4 +45,4 @@ Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da 
 
 1. Clone o repositório:
 ```sh
-git clone [https://github.com/thuhsf/NOME-DO-NOVO-REPOSITORIO.git](https://github.com/thuhsf/NOME-DO-NOVO-REPOSITORIO.git)
+git clone https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
