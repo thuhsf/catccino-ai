@@ -2,7 +2,7 @@
 
 Expansão do projeto **Catccino** (cafeteria temática de gatos) integrando um **Assistente Virtual Inteligente** focado em atendimento e auxílio ao processo de adoção responsável.
 
-> **Projeto desenvolvido para a 1ª Unidade da disciplina de Tópicos Especiais em Inteligência Artificial (TEIA).**
+> **Projeto desenvolvido para a disciplina de Tópicos Especiais em Inteligência Artificial (TEIA).**
 
 ---
 
