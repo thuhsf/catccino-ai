@@ -1,0 +1,1022 @@
+openapi: 3.0.3
+
+info:
+  title: Catccino API
+  description: |
+    Documentação dos microsserviços da plataforma Catccino.
+    Todos os endpoints são roteados via Nginx em `/api/v1/{serviço}/`.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost/api/v1
+    description: Local (via Nginx)
+
+tags:
+  - name: Menu – Categories
+    description: Gerenciamento de categorias do cardápio
+  - name: Menu – Products
+    description: Gerenciamento de produtos do cardápio
+  - name: Orders
+    description: Criação e acompanhamento de pedidos
+  - name: Payments
+    description: Processamento de pagamentos
+  - name: Kitchen
+    description: Tickets de preparo da cozinha
+  - name: Notifications
+    description: Notificações vinculadas aos pedidos
+
+paths:
+
+  /menu/categories:
+    get:
+      tags: [Menu – Categories]
+      summary: Listar categorias
+      operationId: listCategories
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrCategoryResponse"
+              example:
+                categories:
+                  - id: "cat-001"
+                    name: "Cafés"
+                    slug: "cafes"
+                  - id: "cat-002"
+                    name: "Bolos"
+                    slug: "bolos"
+                  - id: "cat-003"
+                    name: "Sucos"
+                    slug: "sucos"
+
+    post:
+      tags: [Menu – Categories]
+      summary: Criar categoria
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+            example:
+              name: "Cafés"
+              slug: "cafes"
+      responses:
+        "201":
+          description: Categoria criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+              example:
+                id: "cat-001"
+                name: "Cafés"
+                slug: "cafes"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /menu/categories/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Menu – Categories]
+      summary: Buscar categoria por ID
+      operationId: findCategory
+      responses:
+        "200":
+          description: Categoria encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+              example:
+                id: "cat-001"
+                name: "Cafés"
+                slug: "cafes"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Menu – Categories]
+      summary: Atualizar categoria
+      operationId: updateCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+            example:
+              name: "Cafés Especiais"
+              slug: "cafes-esp"
+      responses:
+        "200":
+          description: Categoria atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+              example:
+                id: "cat-001"
+                name: "Cafés Especiais"
+                slug: "cafes-esp"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Menu – Categories]
+      summary: Deletar categoria
+      operationId: deleteCategory
+      responses:
+        "204":
+          description: Categoria removida
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /menu/products:
+    get:
+      tags: [Menu – Products]
+      summary: Listar produtos
+      operationId: listProducts
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+            minLength: 4
+            maxLength: 40
+          example: "Cappuccino"
+        - name: available
+          in: query
+          schema:
+            type: boolean
+          example: true
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+          example: "cat-001"
+      responses:
+        "200":
+          description: Lista de produtos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrProductResponse"
+              example:
+                products:
+                  - id: "prod-001"
+                    name: "Cappuccino"
+                    description: "Café com leite vaporizado e espuma cremosa"
+                    price: 12.90
+                    categoryId: "cat-001"
+                    available: true
+                    imageUrl: "https://example.com/images/cappuccino.jpg"
+                    thumbnailUrl: "https://example.com/thumbnails/cappuccino.jpg"
+                    createdAt: "2025-01-10T09:00:00Z"
+                    updatedAt: "2025-01-10T09:00:00Z"
+                  - id: "prod-002"
+                    name: "Bolo de Cenoura"
+                    description: "Bolo fofinho de cenoura com cobertura de chocolate"
+                    price: 8.50
+                    categoryId: "cat-002"
+                    available: true
+                    imageUrl: "https://example.com/images/bolo-cenoura.jpg"
+                    thumbnailUrl: "https://example.com/thumbnails/bolo-cenoura.jpg"
+                    createdAt: "2025-01-10T09:00:00Z"
+                    updatedAt: "2025-01-10T09:00:00Z"
+
+    post:
+      tags: [Menu – Products]
+      summary: Criar produto
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ProductRequest"
+            example:
+              name: "Cappuccino"
+              description: "Café com leite vaporizado e espuma cremosa"
+              price: 12.90
+              categoryId: "cat-001"
+              available: true
+      responses:
+        "201":
+          description: Produto criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+              example:
+                product:
+                  id: "prod-001"
+                  name: "Cappuccino"
+                  description: "Café com leite vaporizado e espuma cremosa"
+                  price: 12.90
+                  categoryId: "cat-001"
+                  available: true
+                  imageUrl: "https://example.com/images/cappuccino.jpg"
+                  thumbnailUrl: "https://example.com/thumbnails/cappuccino.jpg"
+                  createdAt: "2025-01-10T09:00:00Z"
+                  updatedAt: "2025-01-10T09:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /menu/products/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Menu – Products]
+      summary: Buscar produto por ID
+      operationId: findProduct
+      responses:
+        "200":
+          description: Produto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+              example:
+                product:
+                  id: "prod-001"
+                  name: "Cappuccino"
+                  description: "Café com leite vaporizado e espuma cremosa"
+                  price: 12.90
+                  categoryId: "cat-001"
+                  available: true
+                  imageUrl: "https://example.com/images/cappuccino.jpg"
+                  thumbnailUrl: "https://example.com/thumbnails/cappuccino.jpg"
+                  createdAt: "2025-01-10T09:00:00Z"
+                  updatedAt: "2025-01-10T09:00:00Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Menu – Products]
+      summary: Atualizar produto
+      operationId: updateProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+            example:
+              name: "Cappuccino Especial"
+              price: 14.90
+              available: true
+      responses:
+        "200":
+          description: Produto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+              example:
+                product:
+                  id: "prod-001"
+                  name: "Cappuccino Especial"
+                  description: "Café com leite vaporizado e espuma cremosa"
+                  price: 14.90
+                  categoryId: "cat-001"
+                  available: true
+                  imageUrl: "https://example.com/images/cappuccino.jpg"
+                  thumbnailUrl: "https://example.com/thumbnails/cappuccino.jpg"
+                  createdAt: "2025-01-10T09:00:00Z"
+                  updatedAt: "2025-05-22T14:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /order/orders:
+    post:
+      tags: [Orders]
+      summary: Criar pedido
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+            example:
+              customerId: "customer-abc123"
+              items:
+                - productId: "prod-001"
+                  quantity: 2
+                - productId: "prod-002"
+                  quantity: 1
+      responses:
+        "201":
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                id: "order-xyz789"
+                customerId: "customer-abc123"
+                status: "pending"
+                total: 34.30
+                createdAt: "2025-05-22T10:00:00Z"
+                updatedAt: "2025-05-22T10:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /order/orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Orders]
+      summary: Buscar pedido por ID
+      operationId: findOrder
+      responses:
+        "200":
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                id: "order-xyz789"
+                customerId: "customer-abc123"
+                status: "pending"
+                total: 34.30
+                createdAt: "2025-05-22T10:00:00Z"
+                updatedAt: "2025-05-22T10:00:00Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /order/orders/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    patch:
+      tags: [Orders]
+      summary: Atualizar status do pedido
+      operationId: updateOrderStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatusRequest"
+            example:
+              status: "paid"
+      responses:
+        "200":
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                id: "order-xyz789"
+                customerId: "customer-abc123"
+                status: "paid"
+                total: 34.30
+                createdAt: "2025-05-22T10:00:00Z"
+                updatedAt: "2025-05-22T10:05:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /order/orders/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    patch:
+      tags: [Orders]
+      summary: Cancelar pedido
+      operationId: cancelOrder
+      responses:
+        "200":
+          description: Pedido cancelado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+              example:
+                id: "order-xyz789"
+                customerId: "customer-abc123"
+                status: "canceled"
+                total: 34.30
+                createdAt: "2025-05-22T10:00:00Z"
+                updatedAt: "2025-05-22T10:10:00Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /order/orders/customer/{customerId}:
+    parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: string
+        example: "customer-abc123"
+
+    get:
+      tags: [Orders]
+      summary: Listar pedidos por cliente
+      operationId: listOrdersByCustomer
+      responses:
+        "200":
+          description: Pedidos do cliente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrOrderResponse"
+              example:
+                orders:
+                  - id: "order-xyz789"
+                    customerId: "customer-abc123"
+                    status: "paid"
+                    total: 34.30
+                    createdAt: "2025-05-22T10:00:00Z"
+                    updatedAt: "2025-05-22T10:05:00Z"
+                  - id: "order-xyz790"
+                    customerId: "customer-abc123"
+                    status: "pending"
+                    total: 12.90
+                    createdAt: "2025-05-22T11:00:00Z"
+                    updatedAt: "2025-05-22T11:00:00Z"
+
+  /payment/payments:
+    post:
+      tags: [Payments]
+      summary: Criar pagamento
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
+            example:
+              orderId: "order-xyz789"
+              method: "pix"
+              amount: 34.30
+      responses:
+        "201":
+          description: Pagamento criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              example:
+                id: "pay-001"
+                orderId: "order-xyz789"
+                method: "pix"
+                status: "pending"
+                amount: 34.30
+                transactionId: null
+                paidAt: null
+                createdAt: "2025-05-22T10:01:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /payment/payments/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Payments]
+      summary: Buscar pagamento por ID
+      operationId: findPayment
+      responses:
+        "200":
+          description: Pagamento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              example:
+                id: "pay-001"
+                orderId: "order-xyz789"
+                method: "pix"
+                status: "approved"
+                amount: 34.30
+                transactionId: "txn-abc999"
+                paidAt: "2025-05-22T10:03:00Z"
+                createdAt: "2025-05-22T10:01:00Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /payment/payments/{id}/process:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    patch:
+      tags: [Payments]
+      summary: Processar pagamento
+      operationId: processPayment
+      responses:
+        "200":
+          description: Pagamento processado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+              example:
+                id: "pay-001"
+                orderId: "order-xyz789"
+                method: "pix"
+                status: "approved"
+                amount: 34.30
+                transactionId: "txn-abc999"
+                paidAt: "2025-05-22T10:03:00Z"
+                createdAt: "2025-05-22T10:01:00Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /kitchen/tickets:
+    get:
+      tags: [Kitchen]
+      summary: Listar tickets da cozinha
+      operationId: listTickets
+      responses:
+        "200":
+          description: Lista de tickets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrKitchenTicketResponse"
+              example:
+                tickets:
+                  - id: "ticket-001"
+                    orderId: "order-xyz789"
+                    status: "pending"
+                    priority: 1
+                    createdAt: "2025-05-22T10:05:00Z"
+                    startedAt: null
+                    finishedAt: null
+                  - id: "ticket-002"
+                    orderId: "order-xyz790"
+                    status: "preparing"
+                    priority: 2
+                    createdAt: "2025-05-22T10:10:00Z"
+                    startedAt: "2025-05-22T10:12:00Z"
+                    finishedAt: null
+
+  /kitchen/tickets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Kitchen]
+      summary: Buscar ticket por ID
+      operationId: findTicket
+      responses:
+        "200":
+          description: Ticket encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KitchenTicketResponse"
+              example:
+                id: "ticket-001"
+                orderId: "order-xyz789"
+                status: "pending"
+                priority: 1
+                createdAt: "2025-05-22T10:05:00Z"
+                startedAt: null
+                finishedAt: null
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /kitchen/tickets/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    patch:
+      tags: [Kitchen]
+      summary: Atualizar status do ticket
+      operationId: updateTicketStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTicketStatusRequest"
+            example:
+              action: "start"
+      responses:
+        "200":
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KitchenTicketResponse"
+              example:
+                id: "ticket-001"
+                orderId: "order-xyz789"
+                status: "preparing"
+                priority: 1
+                createdAt: "2025-05-22T10:05:00Z"
+                startedAt: "2025-05-22T10:15:00Z"
+                finishedAt: null
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /notification/notifications/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+
+    get:
+      tags: [Notifications]
+      summary: Buscar notificação por ID
+      operationId: findNotification
+      responses:
+        "200":
+          description: Notificação encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+              example:
+                id: "notif-001"
+                orderId: "order-xyz789"
+                type: "payment_confirmed"
+                channel: "email"
+                status: "sent"
+                sentAt: "2025-05-22T10:04:00Z"
+                createdAt: "2025-05-22T10:03:30Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /notification/notifications/order/{orderId}:
+    parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+        example: "order-xyz789"
+
+    get:
+      tags: [Notifications]
+      summary: Listar notificações por pedido
+      operationId: listNotificationsByOrder
+      responses:
+        "200":
+          description: Notificações do pedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrNotificationResponse"
+              example:
+                notifications:
+                  - id: "notif-001"
+                    orderId: "order-xyz789"
+                    type: "order_created"
+                    channel: "push"
+                    status: "sent"
+                    sentAt: "2025-05-22T10:01:00Z"
+                    createdAt: "2025-05-22T10:00:30Z"
+                  - id: "notif-002"
+                    orderId: "order-xyz789"
+                    type: "payment_confirmed"
+                    channel: "email"
+                    status: "sent"
+                    sentAt: "2025-05-22T10:04:00Z"
+                    createdAt: "2025-05-22T10:03:30Z"
+
+components:
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+  responses:
+    BadRequest:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            message: "Dados inválidos"
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            message: "Recurso não encontrado"
+
+  schemas:
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    CategoryRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 12
+        slug:
+          type: string
+          minLength: 4
+          maxLength: 12
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+
+    ArrCategoryResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryResponse"
+
+    ProductRequest:
+      type: object
+      required: [name, description, price, categoryId]
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 40
+        description:
+          type: string
+          minLength: 8
+          maxLength: 300
+        price:
+          type: number
+          format: float
+          minimum: 0.01
+          maximum: 1000
+        categoryId:
+          type: string
+        available:
+          type: boolean
+        img_file:
+          type: string
+          format: binary
+          description: Imagem do produto (multipart/form-data)
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 40
+        description:
+          type: string
+          minLength: 8
+          maxLength: 300
+        price:
+          type: number
+          format: float
+          minimum: 0.01
+          maximum: 1000
+        categoryId:
+          type: string
+        available:
+          type: boolean
+
+    ProductItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        categoryId:
+          type: string
+        available:
+          type: boolean
+        imageUrl:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductResponse:
+      type: object
+      properties:
+        product:
+          $ref: "#/components/schemas/ProductItem"
+
+    ArrProductResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductItem"
+
+    OrderItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    CreateOrderRequest:
+      type: object
+      required: [customerId, items]
+      properties:
+        customerId:
+          type: string
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/OrderItemRequest"
+
+    UpdateOrderStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, paid, canceled]
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        status:
+          type: string
+          enum: [pending, paid, canceled]
+        total:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ArrOrderResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderResponse"
+
+    CreatePaymentRequest:
+      type: object
+      required: [orderId, method, amount]
+      properties:
+        orderId:
+          type: string
+        method:
+          type: string
+          enum: [credit_card, debit_card, pix]
+        amount:
+          type: number
+          format: float
+          minimum: 0.01
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        method:
+          type: string
+          enum: [credit_card, debit_card, pix]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        amount:
+          type: number
+        transactionId:
+          type: string
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateTicketStatusRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [start, ready, delivered]
+
+    KitchenTicketResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        status:
+          type: string
+          enum: [pending, preparing, ready, delivered]
+        priority:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ArrKitchenTicketResponse:
+      type: object
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/KitchenTicketResponse"
+
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        orderId:
+          type: string
+        type:
+          type: string
+          enum: [order_created, payment_confirmed, payment_rejected, order_ready]
+        channel:
+          type: string
+          enum: [email, sms, push]
+        status:
+          type: string
+          enum: [pending, sent, failed]
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ArrNotificationResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"

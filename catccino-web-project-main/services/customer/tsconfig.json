@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "outDir": "dist",
+
+    "module": "NodeNext",
+    "target": "ESNext",
+
+    "types": ["node"],
+
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    "strict": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    
+    "paths": {
+      "@/*": ["./src/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@http/*": ["./src/http/*"],
+      "@controllers/*": ["./src/http/controllers/*"],
+      "@middlewares/*": ["./src/http/middlewares/*"],
+      "@use-cases/*": ["./src/use-cases/*"],
+      "@services/*": ["./src/services/*"],
+      "@repositories/*": ["./src/repositories/*"],
+      "@config/*": ["./src/config/*"],
+      "@database/*": ["./src/database/*"],
+      "@utils/*": ["./src/utils/*"]
+    },
+
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": [
+    "dist",
+    "src/repositories/memory"
+  ]
+}
+

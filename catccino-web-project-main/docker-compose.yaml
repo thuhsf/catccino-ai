@@ -1,0 +1,357 @@
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+    networks:
+      - services
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka1
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN"
+
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+    ports:
+      - "9092:9092"
+    networks:
+      - services
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka2
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN"
+
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+    ports:
+      - "9093:9093"
+    networks:
+      - services
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9093 --list > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9093
+
+      LOGGING_LEVEL_ROOT: "WARN"
+    depends_on:
+      - kafka1
+      - kafka2
+    networks:
+      - services
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - services
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  menu:
+    container_name: menu
+    build:
+      context: ./services/menu
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    ports:
+      - 4000:4000
+    env_file:
+      - ./services/menu/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  order:
+    container_name: order
+    build:
+      context: ./services/order
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/order/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+       condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  payment:
+    container_name: payment
+    build:
+      context: ./services/payment
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/payment/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  kitchen:
+    container_name: kitchen
+    build:
+      context: ./services/kitchen
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/kitchen/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  notification:
+    container_name: notification
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/notification/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  customer:
+    container_name: customer
+    build:
+      context: ./services/customer
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/customer/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  auth:
+    container_name: auth
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    networks:
+      - services
+    restart: always
+    env_file:
+      - ./services/auth/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      customer:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  frontend:
+    container_name: frontend
+    hostname: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      customer:
+        condition: service_started
+      kitchen:
+        condition: service_started
+      menu:
+        condition: service_started
+      notification:
+        condition: service_started
+      order:
+        condition: service_started
+      payment:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - services
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    build: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx:/etc/nginx/
+      - ./docs/openapi.yaml:/usr/share/nginx/html/docs/openapi.yaml
+    depends_on:
+      - menu
+      - order
+      - payment
+      - kitchen
+      - notification
+      - customer
+      - auth
+      - frontend
+    networks:
+      - services
+
+  swagger:
+    image: swaggerapi/swagger-ui:v5.32.1
+    container_name: swagger
+    ports:
+      - "8081:8080"
+    environment:
+      SWAGGER_JSON_URL: http://localhost/docs/openapi.yaml
+      VALIDATOR_URL: "none"
+    depends_on:
+      - nginx
+    networks:
+      - services
+
+networks:
+  services:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

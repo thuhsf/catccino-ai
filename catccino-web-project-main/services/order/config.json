@@ -1,0 +1,10 @@
+{
+    "wait_for_db": {
+        "retries": 20,
+        "delay": 3000
+    },
+    "cors": {
+        "origin": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "PATCH", "PUT", "DELETE"]
+    }
+}
