@@ -19,7 +19,7 @@ chunks = text_splitter.split_documents(docs)
 # 2. Criar o Banco Vetorial (ChromaDB)
 print("Criando banco vetorial (isso pode demorar um pouquinho)...")
 # Vamos usar o modelo de embedding leve do HuggingFace para ser mais rápido
-embeddings = OllamaEmbeddings(model="llama3.2:1b") 
+embeddings = OllamaEmbeddings(model="nomic-embed-text")
 vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 

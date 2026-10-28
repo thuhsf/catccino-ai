@@ -31,18 +31,22 @@ Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da 
 
 ## 🛠️ Tecnologias de Inteligência Artificial
 
-- **LLM:** [Ex: NVIDIA API / Ollama (Llama 3) / Hugging Face]
-- **Embeddings Model:** [Ex: HuggingFaceEmbeddings / OpenAI Embeddings]
-- **Vector Store:** [Ex: ChromaDB / FAISS]
-- **Framework de IA:** LangChain / LlamaIndex
-- **Interface/API:** [Ex: FastAPI / Streamlit / Gradio]
-
-*(Mantida também a infraestrutura base de microsserviços em Node.js, TypeScript e Docker para os serviços legados).*
+- **LLM:** Ollama (modelo Llama 3.2 1B rodando localmente)
+- **Embeddings Model:** OllamaEmbeddings (modelo nomic-embed-text)
+- **Vector Store:** ChromaDB
+- **Framework de IA:** LangChain
+- **Interface/API:** Streamlit
 
 ---
 
-## 📋 Pré-requisitos e Configuração de Segurança
+## 🚀 Como Executar o Projeto
 
-1. Clone o repositório:
-```sh
-git clone https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+### Pré-requisitos
+- Python 3.10 ou superior instalado.
+- [Ollama](https://ollama.com/) instalado e rodando na máquina.
+
+### Passo a passo
+1. **Clone o repositório:**
+   ```sh
+   git clone https://github.com/thuhsf/catccino-ai.git
+   cd catccino-ai/catccino-web-project-main
