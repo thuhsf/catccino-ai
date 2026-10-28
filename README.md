@@ -1,4 +1,4 @@
-# Catccino AI ☕🐈🤖
+# Catccino AI ☕🐈
 
 Expansão do projeto **Catccino** (cafeteria temática de gatos) integrando um **Assistente Virtual Inteligente** focado em atendimento e auxílio ao processo de adoção responsável.
 
