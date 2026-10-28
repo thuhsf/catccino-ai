@@ -10,6 +10,7 @@ import Kitchen from "./pages/Kitchen.jsx";
 import Admin from "./pages/Admin.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { SECRET_ADMIN_PATH } from "./constants.js";
+import { ChatWidget } from "./components/ChatWidget.jsx"; // <-- 1. Importamos o Chat
 
 export default function App() {
   return (
@@ -28,10 +29,14 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      
       <footer className="px-5 pb-8 text-center text-xs text-ink-soft">
         Catccino · projeto acadêmico · frontend React consumindo os microsserviços via API Gateway
         (nginx)
       </footer>
+
+      {/* 2. Adicionamos o Chat aqui, para flutuar em todas as telas */}
+      <ChatWidget /> 
     </div>
   );
 }

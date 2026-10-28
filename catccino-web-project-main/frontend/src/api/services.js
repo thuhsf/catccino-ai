@@ -60,3 +60,10 @@ export const notificationApi = {
       .then((r) => r.data.notifications ?? [])
       .catch(() => []),
 };
+
+export const aiApi = {
+  // Envia a mensagem para a nossa API em Python (FastAPI)
+  chat: (mensagem) => 
+    apiClient.post("http://127.0.0.1:8000/chat", { mensagem })
+      .then((r) => r.data.resposta),
+};
