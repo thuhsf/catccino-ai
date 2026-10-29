@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_classic.chains import create_retrieval_chain
@@ -21,15 +19,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Carrega o RAG quando o servidor inicia
-print("Carregando base de conhecimento...")
-loader = DirectoryLoader("knowledge_base", glob="**/*.md", loader_cls=TextLoader, loader_kwargs={'encoding': 'utf-8'})
-docs = loader.load()
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-chunks = text_splitter.split_documents(docs)
-
+# 1. Carrega o banco vetorial que JÁ FOI CRIADO (em vez de ler os arquivos .md)
+print("Conectando ao banco vetorial existente (RAG)...")
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
-vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
+
+# Usamos o Chroma puro, apontando para a pastinha que o criar_banco.py gerou
+vectorstore = Chroma(
+    persist_directory="./chroma_db", 
+    embedding_function=embeddings
+)
+
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
 llm = ChatOllama(model="llama3.2:1b", temperature=0.3)
