@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain_chroma import Chroma
@@ -19,11 +20,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Carrega o banco vetorial que JÁ FOI CRIADO (em vez de ler os arquivos .md)
-print("Conectando ao banco vetorial existente (RAG)...")
+# 1. Carrega o banco vetorial que JÁ FOI CRIADO no passo 1
+print("Conectando ao banco vetorial existente...")
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
-# Usamos o Chroma puro, apontando para a pastinha que o criar_banco.py gerou
+# Em vez de from_documents, usamos apenas o Chroma apontando para a pasta
 vectorstore = Chroma(
     persist_directory="./chroma_db", 
     embedding_function=embeddings
@@ -35,10 +36,9 @@ llm = ChatOllama(model="llama3.2:1b", temperature=0.3)
 
 system_prompt = (
     "Você é a assistente virtual do Catccino, uma cafeteria temática de gatos. "
-    "Seja educada, simpática e use emojis. "
-    "Use o contexto abaixo para responder à pergunta do cliente. "
-    "Se a resposta não estiver no contexto, diga educadamente que não sabe e "
-    "sugira que o cliente pergunte ao atendente no balcão.\n\n"
+    "Seja educada e simpática. "
+    "Use emojis com moderação (no máximo 1 ou 2 por resposta). "
+    "Responda às perguntas do cliente baseando-se no contexto abaixo.\n\n"
     "Contexto:\n{context}"
 )
 prompt = ChatPromptTemplate.from_messages([
@@ -58,7 +58,20 @@ class Pergunta(BaseModel):
 @app.post("/chat")
 async def chat(pergunta: Pergunta):
     try:
+        # Pega a hora atual para decidir se a loja está aberta
+        hora_atual = datetime.now().hour
+        hora_atual = 17
+         # <-- COLOQUE 18 AQUI PARA TESTAR AGORA (e apague depois)
+
+        # REGRA DE NEGÓCIO: Loja fechada (antes das 7h ou depois das 17h)
+        if hora_atual < 7 or hora_atual >= 17:
+            return {
+                "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h! 🐈😴"
+            }
+
+        # Se a loja estiver aberta, a IA processa a pergunta normalmente
         resposta = rag_chain.invoke({"input": pergunta.mensagem})
         return {"resposta": resposta['answer']}
+        
     except Exception as e:
         return {"erro": str(e)}
