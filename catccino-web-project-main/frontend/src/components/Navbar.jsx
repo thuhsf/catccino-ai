@@ -1,13 +1,13 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useRef } from "react";
-import LogoMark from "./LogoMark.jsx";
+// import LogoMark from "./LogoMark.jsx"; <-- Removemos esta linha
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { SECRET_ADMIN_PATH } from "../constants.js";
 
 const TABS = [
-  { to: "/", label: "Cardápio", end: true },
+  { to: "/menu", label: "Cardápio" },
   { to: "/carrinho", label: "Carrinho" },
   { to: "/pedidos", label: "Meus pedidos" },
   { to: "/cozinha", label: "Cozinha" },
@@ -47,9 +47,12 @@ export default function Navbar() {
   return (
     <div className="sticky top-0 z-40 border-b border-line bg-cream/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-3">
-        <button type="button" onClick={handleLogoClick} className="mr-auto flex items-center gap-2.5">
-          <LogoMark />
-          <span className="font-display text-xl font-bold">Catccino</span>
+                <button type="button" onClick={handleLogoClick} className="mr-auto flex items-center">
+          <img 
+            src="/logo-catccino-transp.png" 
+            alt="Catccino Logo" 
+            className="h-14 w-auto object-contain" 
+          />
         </button>
 
         <nav className="flex flex-wrap gap-1 order-3 w-full overflow-x-auto sm:order-none sm:w-auto">

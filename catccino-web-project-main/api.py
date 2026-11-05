@@ -58,15 +58,16 @@ class Pergunta(BaseModel):
 @app.post("/chat")
 async def chat(pergunta: Pergunta):
     try:
-        # Pega a hora atual para decidir se a loja está aberta
+        # Pega a hora atual do computador (Hora real)
         hora_atual = datetime.now().hour
-        hora_atual = 17
-         # <-- COLOQUE 18 AQUI PARA TESTAR AGORA (e apague depois)
+
+        # hora_atual = 10
+        # hora_atual = 17
 
         # REGRA DE NEGÓCIO: Loja fechada (antes das 7h ou depois das 17h)
         if hora_atual < 7 or hora_atual >= 17:
             return {
-                "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h! 🐈😴"
+                "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h!"
             }
 
         # Se a loja estiver aberta, a IA processa a pergunta normalmente

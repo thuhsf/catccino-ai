@@ -1,86 +1,116 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authApi } from "../api/services";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
   const { login } = useAuth();
   const showToast = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  function update(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      showToast("Login realizado. Bem-vindo(a) de volta!");
-      navigate(location.state?.from || "/");
-    } catch (err) {
-      setError(err.message);
+      const data = await authApi.login({ email, password });
+      login(data); // Salva o token/usuário no contexto
+      showToast("Bem-vindo de volta!");
+      navigate("/");
+    } catch (error) {
+      showToast(error.response?.data?.message || "Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <section className="mx-auto max-w-sm">
-      <div className="rounded-2xl border border-line bg-paper p-8 shadow-warm">
-        <h2 className="font-display text-2xl">Bem-vindo de volta</h2>
-        <p className="mb-5 mt-1 text-sm text-ink-soft">Entre para acompanhar seus pedidos.</p>
-
-        {error && (
-          <div className="mb-3 rounded-lg bg-rust-bg px-3 py-2.5 text-sm text-rust">{error}</div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Field label="E-mail" name="email" type="email" value={form.email} onChange={update} required />
-          <Field
-            label="Senha"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={update}
-            required
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-8">
+      {/* Container Principal (Card grande) */}
+      <div className="flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl md:flex-row">
+        
+        {/* LADO ESQUERDO: Imagem (Escondido no celular) */}
+        <div className="relative hidden w-1/2 md:block">
+          <img
+            src="/gato-login.png" 
+            alt="Gato no Catccino"
+            className="h-full w-full object-cover"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 w-full rounded-full bg-coffee px-4 py-2.5 text-sm font-bold text-paper disabled:opacity-50"
-          >
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
-        </form>
+          {/* Filtro escuro para a imagem não brigar com o texto */}
+          <div className="absolute inset-0 bg-black/30"></div>
+          
+          <div className="absolute bottom-10 left-10 right-10 text-white">
+            <h2 className="font-display text-3xl font-bold mb-2 text-amber-200 bg-transparent">
+              Um café, um ronronar.
+            </h2>
+            <p className="text-sm opacity-90 text-white">
+              Entre para acompanhar seus pedidos e descobrir os gatinhos que esperam por um lar.
+            </p>
+          </div>
+        </div>
 
-        <p className="mt-5 text-center text-sm text-ink-soft">
-          Ainda não tem conta?{" "}
-          <Link to="/cadastro" className="font-semibold text-coffee">
-            Criar conta
-          </Link>
-        </p>
+        {/* LADO DIREITO: Formulário */}
+        <div className="flex w-full flex-col justify-center p-8 md:w-1/2 md:p-12 lg:p-16">
+          <div className="mb-8 text-center md:text-left">
+            <h1 className="font-display text-2xl font-bold text-ink mb-2">Bem-vindo de volta</h1>
+            <p className="text-sm text-ink-soft">Insira suas credenciais para acessar sua conta.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">E-mail</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
+                placeholder="seu@email.com"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">Senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
+                placeholder="Sua senha"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-sm mt-1">
+              <label className="flex items-center gap-2 text-ink-soft cursor-pointer">
+                <input type="checkbox" className="rounded border-line text-coffee focus:ring-coffee" />
+                Lembrar de mim
+              </label>
+              <a href="#" className="font-semibold text-coffee hover:underline">Esqueci minha senha</a>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-4 w-full rounded-lg bg-coffee py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-warm disabled:opacity-70"
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center text-sm text-ink-soft">
+            Ainda não tem conta?{" "}
+            <Link to="/cadastro" className="font-bold text-coffee hover:underline">
+              Criar conta nova
+            </Link>
+          </div>
+        </div>
+        
       </div>
-    </section>
-  );
-}
-
-export function Field({ label, ...inputProps }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-ink-soft">{label}</span>
-      <input
-        {...inputProps}
-        className="w-full rounded-lg border-1.5 border-line bg-cream px-3 py-2.5 text-sm text-ink focus:border-coffee focus:outline-none"
-        style={{ borderWidth: "1.5px" }}
-      />
-    </label>
+    </div>
   );
 }
