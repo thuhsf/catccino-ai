@@ -29,13 +29,23 @@ Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da 
 
 ---
 
+## 🏗️ Arquitetura da Solução (Full-Stack)
+
+Para atender aos requisitos da disciplina e criar uma aplicação real, o projeto foi dividido em duas camadas principais que se comunicam via API:
+
+1. **Back-end de IA (Python + FastAPI):** Responsável por carregar o banco vetorial (ChromaDB), processar a pergunta do usuário, buscar o contexto (RAG) e gerar a resposta usando o LLM local (Ollama). Expõe uma rota `/chat` que recebe a mensagem via JSON e retorna a resposta.
+2. **Front-end (React + Vite + Tailwind CSS):** A interface visual onde o cliente interage com o site da cafeteria. Foi desenvolvido um componente flutuante (`ChatWidget.jsx`) que consome a API do FastAPI em tempo real, além das telas de Login, Cadastro, Cardápio e Carrinho.
+
+---
+
 ## 🛠️ Tecnologias de Inteligência Artificial
 
 - **LLM:** Ollama (modelo Llama 3.2 1B rodando localmente)
 - **Embeddings Model:** OllamaEmbeddings (modelo nomic-embed-text)
-- **Vector Store:** ChromaDB
+- **Vector Store:** ChromaDB (com persistência local para não recriar os embeddings a cada execução)
 - **Framework de IA:** LangChain
-- **Interface/API:** Streamlit
+- **API:** FastAPI + Uvicorn
+- **Interface:** React (componente de chat) e Streamlit (versão alternativa de chat para testes isolados)
 
 ---
 
@@ -43,9 +53,11 @@ Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da 
 
 ### Pré-requisitos
 - Python 3.10 ou superior instalado.
+- Node.js (versão 18+) instalado.
 - [Ollama](https://ollama.com/) instalado e rodando na máquina.
 
-### Passo a passo
+### Passo a passo completo
+
 1. **Clone o repositório:**
    ```sh
    git clone https://github.com/thuhsf/catccino-ai.git
