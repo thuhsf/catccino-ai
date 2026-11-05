@@ -44,8 +44,10 @@ export default function Login() {
           <div className="absolute inset-0 bg-black/30"></div>
           
           <div className="absolute bottom-10 left-10 right-10 text-white">
-            <h2 className="font-display text-3xl font-bold mb-2 text-amber-200 bg-transparent">
-              Um café, um ronronar.
+            <h2 
+              className="font-display text-3xl font-bold mb-2 bg-transparent" 
+              style={{ color: "#e6ccb2", backgroundColor: "transparent", display: "inline-block" }}
+            > Um café, um ronronar.
             </h2>
             <p className="text-sm opacity-90 text-white">
               Entre para acompanhar seus pedidos e descobrir os gatinhos que esperam por um lar.
@@ -96,9 +98,9 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-4 w-full rounded-lg bg-coffee py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-warm disabled:opacity-70"
+              className="mt-4 w-full rounded-lg bg-coffee py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 hover:shadow-warm disabled:opacity-70 cursor-pointer"
             >
-              {loading ? "Entrando..." : "Entrar"}
+             {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 

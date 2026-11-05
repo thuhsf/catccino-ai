@@ -61,7 +61,7 @@ export function ChatWidget() {
           <img 
             src="/chat-icon.png" 
             alt="Abrir Chat" 
-            style={{ width: "70px", height: "70px", objectFit: "contain" }} // Ajustei o tamanho e o objectFit
+            style={{ width: "90px", height: "90px", objectFit: "contain" }} 
           />
         </button>
       )}
