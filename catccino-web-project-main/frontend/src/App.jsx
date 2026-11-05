@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom"; // Importamos o Navigate
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Menu from "./pages/Menu.jsx";
 import Cart from "./pages/Cart.jsx";
@@ -9,6 +9,8 @@ import OrderDetail from "./pages/OrderDetail.jsx";
 import Kitchen from "./pages/Kitchen.jsx";
 import Admin from "./pages/Admin.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import Cardapio from "./pages/Cardapio.jsx"; // <-- IMPORT NOVO
+import Adocao from "./pages/Adocao.jsx";     // <-- IMPORT NOVO
 import { SECRET_ADMIN_PATH } from "./constants.js";
 import { ChatWidget } from "./components/ChatWidget.jsx";
 
@@ -18,11 +20,14 @@ export default function App() {
       <Navbar />
       <main className="mx-auto max-w-5xl px-5 py-8 pb-24">
         <Routes>
-          {/* A rota raiz agora redireciona direto para o Login */}
+          {/* A rota raiz redireciona para o Login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           
-          {/* As outras rotas continuam normais */}
-          <Route path="/menu" element={<Menu />} /> {/* Repare que o Menu mudou para /menu */}
+          {/* Rotas normais */}
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/cardapio" element={<Cardapio />} /> {/* <-- ROTA NOVA */}
+          <Route path="/adocao" element={<Adocao />} />     {/* <-- ROTA NOVA */}
+          
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
           <Route path="/carrinho" element={<Cart />} />

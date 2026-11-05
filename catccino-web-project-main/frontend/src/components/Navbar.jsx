@@ -1,16 +1,15 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useRef } from "react";
-// import LogoMark from "./LogoMark.jsx"; <-- Removemos esta linha
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { SECRET_ADMIN_PATH } from "../constants.js";
 
 const TABS = [
-  { to: "/menu", label: "Cardápio" },
-  { to: "/carrinho", label: "Carrinho" },
+  { to: "/menu", label: "Home" },
+  { to: "/cardapio", label: "Cardápio" },
+  { to: "/adocao", label: "Adoção" },
   { to: "/pedidos", label: "Meus pedidos" },
-  { to: "/cozinha", label: "Cozinha" },
 ];
 
 export default function Navbar() {
@@ -46,13 +45,15 @@ export default function Navbar() {
 
   return (
     <div className="sticky top-0 z-40 border-b border-line bg-cream/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-3">
-                <button type="button" onClick={handleLogoClick} className="mr-auto flex items-center">
+      {/* Mudei o py-3 para py-2 para diminuir a altura da barra */}
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-2">
+        <button type="button" onClick={handleLogoClick} className="mr-auto flex items-center gap-2">
           <img 
-            src="/logo-catccino-transp.png" 
-            alt="Catccino Logo" 
-            className="h-14 w-auto object-contain" 
+            src="/logo-cat-back.png" 
+            alt="Logo Catccino" 
+            style={{ width: "44px", height: "44px", objectFit: "contain" }} 
           />
+          <span className="font-display text-lg font-bold">Catccino</span>
         </button>
 
         <nav className="flex flex-wrap gap-1 order-3 w-full overflow-x-auto sm:order-none sm:w-auto">
@@ -62,7 +63,8 @@ export default function Navbar() {
               to={tab.to}
               end={tab.end}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold transition-colors ${isActive
+                // Mudei o py-2 para py-1.5 para deixar os links mais discretos
+                `whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${isActive
                   ? "bg-coffee text-paper"
                   : "text-ink-soft hover:bg-cream-2 hover:text-ink"
                 }`
