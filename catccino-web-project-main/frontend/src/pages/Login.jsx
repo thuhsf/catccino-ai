@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../api/services";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
-import { AUTH_STORAGE_KEY } from "../api/client.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   
+  // CORREÇÃO AQUI: O useState do olhinho foi movido para dentro do componente
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  
   const navigate = useNavigate();
   const { login } = useAuth();
   const showToast = useToast();
 
-  async function handleSubmit(e) {
+    async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     
@@ -22,31 +23,41 @@ export default function Login() {
       // 1. Pega os dados da conta que foram salvos no cadastro
       const contaSalva = localStorage.getItem("catccino_user");
       
-      if (contaSalva) {
-        const user = JSON.parse(contaSalva);
-        
-        // 2. Verifica se o e-mail e senha digitados batem
-        if (user.email === email && user.password === password) {
-          
-          // 3. Cria a sessão de login (token)
-          const sessaoSimulada = {
-            token: "token-simulado-123",
-            customer: user
-          };
-          localStorage.setItem("catccino:auth", JSON.stringify(sessaoSimulada));
-
-          showToast(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`);
-          navigate("/menu");
-          
-          // Força a Navbar a atualizar
-          setTimeout(() => window.location.reload(), 500); 
-          
-        } else {
-          showToast("E-mail ou senha incorretos.");
-        }
-      } else {
+      if (!contaSalva) {
+        // Se não existe NENHUMA conta salva no navegador
         showToast("Nenhuma conta encontrada. Por favor, cadastre-se primeiro.");
+        setLoading(false);
+        return;
       }
+
+      const user = JSON.parse(contaSalva);
+      
+      // 2. Primeiro, verifica se o e-mail bate com o que está cadastrado
+      if (user.email.toLowerCase() !== email.toLowerCase()) {
+        showToast("Não há conta cadastrada com esse e-mail.");
+        setLoading(false);
+        return;
+      }
+
+      // 3. Se o e-mail bate, agora verifica se a senha está correta
+      if (user.password !== password) {
+        showToast("Senha incorreta. Tente novamente.");
+        setLoading(false);
+        return;
+      }
+      
+      // 4. Se passou por tudo, faz o login
+      const sessaoSimulada = {
+        token: "token-simulado-123",
+        customer: user
+      };
+      localStorage.setItem("catccino:auth", JSON.stringify(sessaoSimulada));
+
+      showToast(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`);
+      navigate("/menu");
+      
+      // Força a Navbar a atualizar
+      setTimeout(() => window.location.reload(), 500); 
       
       setLoading(false);
     }, 1000);
@@ -54,24 +65,23 @@ export default function Login() {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-8">
-      {/* Container Principal (Card grande) */}
       <div className="flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl md:flex-row">
         
-        {/* LADO ESQUERDO: Imagem (Escondido no celular) */}
+        {/* LADO ESQUERDO: Imagem */}
         <div className="relative hidden w-1/2 md:block">
           <img
             src="/gato-login.png" 
             alt="Gato no Catccino"
             className="h-full w-full object-cover"
           />
-          {/* Filtro escuro para a imagem não brigar com o texto */}
           <div className="absolute inset-0 bg-black/30"></div>
           
           <div className="absolute bottom-10 left-10 right-10 text-white">
             <h2 
               className="font-display text-3xl font-bold mb-2 bg-transparent" 
               style={{ color: "#e6ccb2", backgroundColor: "transparent", display: "inline-block" }}
-            > Um café, um ronronar.
+            > 
+              Um café, um ronronar.
             </h2>
             <p className="text-sm opacity-90 text-white">
               Entre para acompanhar seus pedidos e descobrir os gatinhos que esperam por um lar.
@@ -101,14 +111,18 @@ export default function Login() {
 
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-ink">Senha <span className="text-red-500">*</span></label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
-                placeholder="Sua senha"
-              />
+              <div className="relative">
+                <input
+                  type={mostrarSenha ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  maxLength={8}
+                  className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee pr-10"
+                  placeholder="Sua senha"
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm mt-1">
