@@ -23,7 +23,7 @@ export default function App() {
       <main className="mx-auto max-w-5xl px-5 py-8 pb-24">
         <Routes>
           {/* A rota raiz redireciona para o Login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/menu" replace />} />
           
           {/* Rotas normais */}
           <Route path="/menu" element={<Menu />} />
