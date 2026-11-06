@@ -9,8 +9,10 @@ import OrderDetail from "./pages/OrderDetail.jsx";
 import Kitchen from "./pages/Kitchen.jsx";
 import Admin from "./pages/Admin.jsx";
 import NotFound from "./pages/NotFound.jsx";
-import Cardapio from "./pages/Cardapio.jsx"; // <-- IMPORT NOVO
-import Adocao from "./pages/Adocao.jsx";     // <-- IMPORT NOVO
+import Cardapio from "./pages/Cardapio.jsx";
+import Adocao from "./pages/Adocao.jsx";
+import RecuperarSenha from "./pages/RecuperarSenha.jsx";
+
 import { SECRET_ADMIN_PATH } from "./constants.js";
 import { ChatWidget } from "./components/ChatWidget.jsx";
 
@@ -25,8 +27,9 @@ export default function App() {
           
           {/* Rotas normais */}
           <Route path="/menu" element={<Menu />} />
-          <Route path="/cardapio" element={<Cardapio />} /> {/* <-- ROTA NOVA */}
-          <Route path="/adocao" element={<Adocao />} />     {/* <-- ROTA NOVA */}
+          <Route path="/cardapio" element={<Cardapio />} />
+          <Route path="/adocao" element={<Adocao />} />
+          <Route path="/recuperar-senha" element={<RecuperarSenha />} />
           
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />

@@ -34,6 +34,36 @@ export default function Cardapio() {
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-10">
+      
+      {/* BANNER COM IMAGEM DE FUNDO */}
+      <div 
+        className="relative mb-10 flex flex-col justify-end overflow-hidden rounded-[20px] p-8 text-white min-h-[250px]"
+        style={{
+          backgroundImage: "url('/banner-cardapio.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center 40%",
+        }}
+      >
+        {/* Camada escura para o texto não sumir na foto */}
+        <div className="absolute inset-0 bg-black/50"></div> 
+        
+        {/* Conteúdo do Banner */}
+        <div className="relative z-10">
+          {/* TÍTULO ADICIONADO AQUI */}
+          <h2 
+            className="font-display text-3xl font-bold mb-2 bg-transparent" 
+            style={{ color: "#e6ccb2", backgroundColor: "transparent" }}
+          > 
+            Café fresquinho, companhia felina e muito amor.
+          </h2>
+          
+          <p className="mt-2 max-w-md text-sm text-white-2">
+            Descubra os sabores do Catccino. Do café quentinho ao cookie crocante, tudo feito com muito amor.
+          </p>
+        </div>
+      </div>
+
+      {/* Título do Cardápio */}
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-bold text-ink mb-2">Nosso Cardápio</h1>
         <p className="text-ink-soft">Tudo fresquinho, direto da cozinha para a sua mesa.</p>

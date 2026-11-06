@@ -45,44 +45,26 @@ export default function Menu() {
 
   return (
     <section>
-      <div className="relative mb-8 flex flex-col-reverse items-start justify-between gap-7 overflow-hidden rounded-[20px] bg-coffee-dark p-8 text-cream sm:flex-row sm:items-center">
-        <div>
-          <h1 className="font-display text-3xl font-bold leading-tight text-cream max-w-md">
-            Café quentinho, atendimento com jeitinho de gato.
-          </h1>
-          <p className="mt-2 max-w-md text-sm text-cream-2">
-            Monte seu pedido no cardápio digital do Catccino e acompanhe cada etapa — do preparo à
-            entrega — em tempo real.
-          </p>
-        </div>
-        <svg viewBox="0 0 100 100" fill="#F6EFE4" className="absolute -bottom-2 -right-2 w-40 opacity-10">
-          <ellipse cx="50" cy="62" rx="22" ry="18" />
-          <ellipse cx="24" cy="34" rx="9" ry="11" />
-          <ellipse cx="46" cy="20" rx="9" ry="11" />
-          <ellipse cx="70" cy="20" rx="9" ry="11" />
-          <ellipse cx="75" cy="34" rx="9" ry="11" />
-        </svg>
-      </div>
+      {/* O Banner Marrom foi removido daqui da Home */}
 
-      <div className="mb-4 flex items-baseline justify-between gap-4">
-        <div>
-          <h2 className="text-2xl">Cardápio</h2>
-          <p className="mt-1 text-sm text-ink-soft">Tudo fresquinho, direto da cozinha.</p>
-        </div>
+      <div className="mb-6 text-center md:text-left">
+        <h1 className="text-3xl font-display font-bold text-ink">Bem-vindo ao Catccino!</h1>
+        <p className="mt-2 text-ink-soft">Escolha seus produtos favoritos no nosso cardápio.</p>
       </div>
 
       {status === "loading" && <EmptyState>Carregando cardápio…</EmptyState>}
+      
       {status === "error" && (
         <EmptyState>
-          Não foi possível carregar o cardápio.
+          Ops! Parece que o nosso sistema de pedidos está offline no momento.
           <br />
-          <small>{errorMsg}</small>
+          <small className="text-xs text-ink-soft">(Mas não se preocupe, você pode conversar com a nossa IA no canto da tela!)</small>
         </EmptyState>
       )}
 
       {status === "ready" && (
         <>
-          <div className="mb-6 flex flex-wrap gap-2">
+          <div className="mb-6 flex flex-wrap justify-center md:justify-start gap-2">
             <Chip active={activeCategory === null} onClick={() => setActiveCategory(null)}>
               Todos
             </Chip>

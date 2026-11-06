@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { AUTH_STORAGE_KEY } from "../api/client.js";
 
 export default function Register() {
   const { register } = useAuth();
@@ -12,23 +13,64 @@ export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Função normal para Nome, E-mail e Senha
   function update(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  async function handleSubmit(e) {
+  // Função com máscara apenas para o Telefone
+  function formatarTelefone(e) {
+    let valor = e.target.value.replace(/\D/g, ""); // Remove tudo que não for número
+    valor = valor.slice(0, 11); // Limita a 11 números
+
+    // Aplica a máscara (00) 00000-0000
+    if (valor.length > 10) {
+      valor = valor.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
+    } else if (valor.length > 6) {
+      valor = valor.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+    } else if (valor.length > 2) {
+      valor = valor.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+    } else if (valor.length > 0) {
+      valor = valor.replace(/^(\d*)/, "($1");
+    }
+    
+    setForm((f) => ({ ...f, phone: valor }));
+  }
+    async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    try {
-      await register(form);
-      showToast("Conta criada com sucesso!");
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-    } finally {
+    
+    setTimeout(() => {
+      // 1. Pega a conta que já está salva (se existir)
+      const contaSalva = localStorage.getItem("catccino_user");
+      
+      if (contaSalva) {
+        const user = JSON.parse(contaSalva);
+        
+        // 2. Compara o e-mail digitado com o e-mail já cadastrado
+        // O toLowerCase() serve para ignorar se a pessoa digitou com letra maiúscula ou minúscula
+        if (user.email.toLowerCase() === form.email.toLowerCase()) {
+          setError("Este e-mail já está cadastrado. Por favor, faça login ou tente outro e-mail.");
+          setLoading(false);
+          return; // Para a execução aqui e não salva nada
+        }
+      }
+
+      // 3. Se o e-mail não existe (ou é a primeira vez), salva a conta
+      localStorage.setItem("catccino_user", JSON.stringify(form));
+
+      // 4. Cria a sessão simulada
+      const sessaoSimulada = {
+        token: "token-simulado-da-apresentacao",
+        customer: form
+      };
+      localStorage.setItem("catccino:auth", JSON.stringify(sessaoSimulada));
+      
+      showToast("Conta criada com sucesso! Faça login para continuar.");
+      navigate("/login");
       setLoading(false);
-    }
+    }, 1000);
   }
 
   return (
@@ -38,15 +80,19 @@ export default function Register() {
         {/* LADO ESQUERDO (ou Direito, invertido): Imagem */}
         <div className="relative hidden w-1/2 md:block">
           <img
-            src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=1000&auto=format&fit=crop" // Foto de um gato fofo
+            src="/adocao-login.jpg"
             alt="Gato fofo"
             className="h-full w-full object-cover"
+            style={{objectPosition: "center 30%"}}
           />
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="absolute bottom-10 left-10 right-10 text-white">
-            <h2 className="font-display text-3xl font-bold mb-2">Adote um amigo.</h2>
+            <h2 
+            className="font-display text-3xl font-bold mb-2" style={{ color: "#e6ccb2" }} >
+              Adote um amigo.
+            </h2>
             <p className="text-sm opacity-90">
-              Crie sua conta para acompanhar pedidos e apoiar nossas ONGs parceiras.
+              Crie sua conta para acompanhar pedidos e apoiar nossas ONG's parceiras.
             </p>
           </div>
         </div>
@@ -54,7 +100,7 @@ export default function Register() {
         {/* LADO DIREITO: Formulário */}
         <div className="flex w-full flex-col justify-center p-8 md:w-1/2 md:p-12 lg:p-14">
           <div className="mb-6">
-            <h1 className="font-display text-2xl font-bold text-ink mb-1">Criar sua conta</h1>
+            <h1 className="font-display text-2xl font-bold text-ink mb-1">Crie a sua conta</h1>
             <p className="text-sm text-ink-soft">Leva menos de um minuto.</p>
           </div>
 
@@ -66,12 +112,12 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">Nome</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">Nome <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="name"
                 value={form.name}
-                onChange={update}
+                onChange={update} // <-- Corrigido para update
                 required
                 className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
                 placeholder="Seu nome completo"
@@ -79,7 +125,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">E-mail</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">E-mail <span className="text-red-500">*</span></label>
               <input
                 type="email"
                 name="email"
@@ -92,12 +138,12 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">Telefone</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">Telefone <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="phone"
                 value={form.phone}
-                onChange={update}
+                onChange={formatarTelefone} // <-- Corrigido para formatarTelefone
                 required
                 className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
                 placeholder="(00) 00000-0000"
@@ -105,16 +151,17 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">Senha</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">Senha <span className="text-red-500">*</span></label>
               <input
                 type="password"
                 name="password"
                 value={form.password}
                 onChange={update}
-                minLength={6}
+                minLength={6} // Exige no mínimo 6
+                maxLength={8} // Limita a exatamente 8
                 required
                 className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="6-8 caracteres"
               />
             </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/services";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { AUTH_STORAGE_KEY } from "../api/client.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,16 +17,39 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    try {
-      const data = await authApi.login({ email, password });
-      login(data); // Salva o token/usuário no contexto
-      showToast("Bem-vindo de volta!");
-      navigate("/");
-    } catch (error) {
-      showToast(error.response?.data?.message || "Erro ao fazer login. Verifique suas credenciais.");
-    } finally {
+    
+    setTimeout(() => {
+      // 1. Pega os dados da conta que foram salvos no cadastro
+      const contaSalva = localStorage.getItem("catccino_user");
+      
+      if (contaSalva) {
+        const user = JSON.parse(contaSalva);
+        
+        // 2. Verifica se o e-mail e senha digitados batem
+        if (user.email === email && user.password === password) {
+          
+          // 3. Cria a sessão de login (token)
+          const sessaoSimulada = {
+            token: "token-simulado-123",
+            customer: user
+          };
+          localStorage.setItem("catccino:auth", JSON.stringify(sessaoSimulada));
+
+          showToast(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`);
+          navigate("/menu");
+          
+          // Força a Navbar a atualizar
+          setTimeout(() => window.location.reload(), 500); 
+          
+        } else {
+          showToast("E-mail ou senha incorretos.");
+        }
+      } else {
+        showToast("Nenhuma conta encontrada. Por favor, cadastre-se primeiro.");
+      }
+      
       setLoading(false);
-    }
+    }, 1000);
   }
 
   return (
@@ -64,7 +88,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">E-mail</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">E-mail <span className="text-red-500">*</span></label>
               <input
                 type="email"
                 value={email}
@@ -76,7 +100,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-ink">Senha</label>
+              <label className="mb-1.5 block text-sm font-semibold text-ink">Senha <span className="text-red-500">*</span></label>
               <input
                 type="password"
                 value={password}
@@ -92,7 +116,7 @@ export default function Login() {
                 <input type="checkbox" className="rounded border-line text-coffee focus:ring-coffee" />
                 Lembrar de mim
               </label>
-              <a href="#" className="font-semibold text-coffee hover:underline">Esqueci minha senha</a>
+              <Link to="/recuperar-senha" className="font-semibold text-coffee hover:underline">Esqueci minha senha</Link>
             </div>
 
             <button
