@@ -11,7 +11,7 @@ const GATOS = [
     desc: "Muito brincalhão e energético. Adora subir nas prateleiras!",
     status: "Disponível",
     img: "/gato-mingau.jpg",
-    posicao: "center 40%" // <-- Ajuste para o Mingau (mostra mais a parte de cima)
+    posicao: "center 40%"
   },
   { 
     id: 2, 
@@ -35,6 +35,39 @@ const GATOS = [
     img: "/gato-fred.jpg", // (coloque a foto do Fred na pasta public)
     posicao: "center 20%" // <-- Ajuste para o Fred
   },
+  {
+    id: 4, 
+    nome: "Nina", // Nome do novo gatinho
+    idade: "6 meses", 
+    sexo: "Fêmea", 
+    cor: "Branca", 
+    desc: "Muito dócil e adora brincar com bolinhas de papel.",
+    status: "Disponível",
+    img: "/gato-nina.jpg", // Nome da foto na pasta public
+    posicao: "center 50%"
+  },
+  {
+    id: 5, 
+    nome: " Kofu", 
+    idade: "4 anos", 
+    sexo: "Macho", 
+    cor: "Laranja", 
+    desc: "Um verdadeiro leãozinho, adora dormir no sol.",
+    status: "Disponível",
+    img: "/gato-simba.jpg",
+    posicao: "center 50%"
+  },
+  {
+    id: 6, 
+    nome: "Frajola", 
+    idade: "1 ano", 
+    sexo: "Macho", 
+    cor: "Branco e Preto", 
+    desc: "Esperto, falante e muito carinhoso. Adora dormir no colo e brincar com ponteiros de laser",
+    status: "Disponível",
+    img: "/",
+    posicao: "center 50%"
+  }
 ];
 
 export default function Adocao() {
