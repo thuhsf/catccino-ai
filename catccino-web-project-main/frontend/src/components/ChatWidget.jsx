@@ -6,8 +6,7 @@ import { GATOS } from "../data/gatos.js";
 const sugestoes = [
   "Qual o horário de funcionamento?",
   "Quais gatos estão para adoção?",
-  "Quanto custa o Latte Gatinho?",
-  "Vocês têm opções sem lactose?"
+  "Quanto custa o Latte Gatinho?"
 ];
 
 const MENSAGEM_INICIAL = {
@@ -35,12 +34,13 @@ export function ChatWidget() {
 
     try {
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Tempo esgotado")), 15000)
+        setTimeout(() => reject(new Error("Tempo esgotado")), 45000)
       );
 
       const respostaIA = await Promise.race([aiApi.chat(texto, GATOS.length), timeout]);
       
-      setHistorico((prev) => [...prev, { role: "assistant", content: respostaIA }]);
+      // Proteção: garante que a resposta nunca seja undefined
+      setHistorico((prev) => [...prev, { role: "assistant", content: respostaIA || "Desculpe, não consegui gerar uma resposta." }]);
     } catch (error) {
       console.error(error);
       setHistorico((prev) => [...prev, { 
@@ -92,52 +92,75 @@ export function ChatWidget() {
 
           {/* Histórico de Mensagens */}
           <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-cream/30">
-            {historico.map((msg, index) => (
-              <div 
-                key={index} 
-                className={`max-w-[85%] p-3 text-sm shadow-sm ${
-                  msg.role === "user" 
-                    ? "self-end bg-coffee text-white rounded-2xl rounded-tr-sm" 
-                    : "self-start bg-white text-ink border border-line rounded-2xl rounded-tl-sm"
-                }`}
-              >
-                {msg.content}
-                
-                {/* BOTÃO "VER GATINHOS" */}
-                {msg.role === "assistant" && 
-                 index > 0 && 
-                 (msg.content.toLowerCase().includes("gatinhos") || 
-                  msg.content.toLowerCase().includes("gatos") ||
-                  msg.content.toLowerCase().includes("adoção") ||
-                  msg.content.toLowerCase().includes("adotar")) && (
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      navigate("/adocao");
-                    }}
-                    className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
-                  >
-                    Ver gatinhos disponíveis
-                  </button>
-                )}
+            {historico.map((msg, index) => {
+              // PROTEÇÃO: Garante que a pergunta existe e converte para minúscula
+              const perguntaUsuario = (historico[index - 1]?.content || "").toLowerCase();
+              
+              // PROTEÇÃO: Garante que a resposta existe e converte para minúscula
+              const textoResposta = (msg.content || "").toLowerCase();
+              
+              // Verifica se a pergunta é sobre o menu
+              const perguntaSobreMenu = perguntaUsuario.includes("cardápio") || 
+                                        perguntaUsuario.includes("menu") || 
+                                        perguntaUsuario.includes("café") || 
+                                        perguntaUsuario.includes("bebida") || 
+                                        perguntaUsuario.includes("comida") || 
+                                        perguntaUsuario.includes("preço") ||
+                                        perguntaUsuario.includes("custa") ||
+                                        perguntaUsuario.includes("lactose") ||
+                                        (msg.role === "assistant" && textoResposta.includes("conferida"));
 
-                {/* BOTÃO "CONHECER O MENU" */}
-                {msg.role === "assistant" && 
-                 index > 0 && 
-                 (msg.content.toLowerCase().includes("cardápio") || 
-                  msg.content.toLowerCase().includes("menu")) && (
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      navigate("/cardapio");
-                    }}
-                    className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
-                  >
-                    Conhecer o menu
-                  </button>
-                )}
-              </div>
-            ))}
+              // Verifica se a pergunta é sobre adoção
+              const perguntaSobreGatos = perguntaUsuario.includes("adoção") || 
+                                         perguntaUsuario.includes("adotar") ||
+                                         perguntaUsuario.includes("ong") ||
+                                         (perguntaUsuario.includes("gato") && perguntaUsuario.includes("catccino")) ||
+                                         (perguntaUsuario.includes("gatinho") && perguntaUsuario.includes("catccino"));
+
+              return (
+                <div 
+                  key={index} 
+                  className={`max-w-[85%] p-3 text-sm shadow-sm ${
+                    msg.role === "user" 
+                      ? "self-end bg-coffee text-white rounded-2xl rounded-tr-sm" 
+                      : "self-start bg-white text-ink border border-line rounded-2xl rounded-tl-sm"
+                  }`}
+                >
+                  {/* Mostra o conteúdo com proteção */}
+                  {msg.content || "..."}
+                  
+                  {/* BOTÃO "VER GATINHOS" */}
+                  {msg.role === "assistant" && 
+                   index > 0 && 
+                   perguntaSobreGatos && (
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate("/adocao");
+                      }}
+                      className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
+                    >
+                      Ver gatinhos disponíveis
+                    </button>
+                  )}
+
+                  {/* BOTÃO "CONHECER O MENU" */}
+                  {msg.role === "assistant" && 
+                   index > 0 && 
+                   perguntaSobreMenu && (
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate("/cardapio");
+                      }}
+                      className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
+                    >
+                      Conhecer o menu
+                    </button>
+                  )}
+                </div>
+              );
+            })}
             
             {carregando && (
               <div className="self-start bg-white border border-line text-ink-soft p-3 rounded-2xl rounded-tl-sm text-xs italic">

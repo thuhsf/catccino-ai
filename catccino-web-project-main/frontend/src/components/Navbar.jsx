@@ -53,10 +53,10 @@ export default function Navbar() {
       <div className="sticky top-0 z-40 border-b border-line bg-cream/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-5 py-2">
           <button type="button" onClick={handleLogoClick} className="mr-auto flex items-center gap-2">
-            <img 
-              src="/logo-cat-back.png" 
-              alt="Logo Catccino" 
-              style={{ width: "44px", height: "44px", objectFit: "contain" }} 
+            <img
+              src="/logo-cat-back.png"
+              alt="Logo Catccino"
+              className="h-24 w-24 -my-7 object-contain"
             />
             <span className="font-display text-lg font-bold">Catccino</span>
           </button>
