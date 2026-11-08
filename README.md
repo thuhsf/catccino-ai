@@ -1,4 +1,4 @@
-# Catccino AI ☕🐈
+# Catccino AI
 
 Expansão do projeto **Catccino** (cafeteria temática de gatos) integrando um **Assistente Virtual Inteligente** focado em atendimento e auxílio ao processo de adoção responsável.
 
@@ -6,7 +6,7 @@ Expansão do projeto **Catccino** (cafeteria temática de gatos) integrando um *
 
 ---
 
-## 💡 Sobre o Projeto & Módulo de IA
+## Sobre o Projeto & Módulo de IA
 
 O Catccino evoluiu! Além da estrutura de backend e frontend desenvolvida anteriormente, a aplicação agora conta com uma **Inteligência Artificial Generativa** atuando como assistente virtual no site.
 
@@ -17,7 +17,7 @@ O Catccino evoluiu! Além da estrutura de backend e frontend desenvolvida anteri
 
 ---
 
-## 🧠 Conceitos de IA Utilizados
+## Conceitos de IA Utilizados
 
 Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da unidade:
 
@@ -29,7 +29,7 @@ Seguindo as diretrizes da disciplina, foram aplicados os seguintes conceitos da 
 
 ---
 
-## 🏗️ Arquitetura da Solução (Full-Stack)
+## Arquitetura da Solução (Full-Stack)
 
 Para atender aos requisitos da disciplina e criar uma aplicação real, o projeto foi dividido em duas camadas principais que se comunicam via API:
 
@@ -38,7 +38,7 @@ Para atender aos requisitos da disciplina e criar uma aplicação real, o projet
 
 ---
 
-## 🛠️ Tecnologias de Inteligência Artificial
+## Tecnologias de Inteligência Artificial
 
 - **LLM:** Ollama (modelo Llama 3.2 1B rodando localmente)
 - **Embeddings Model:** OllamaEmbeddings (modelo nomic-embed-text)
@@ -49,7 +49,7 @@ Para atender aos requisitos da disciplina e criar uma aplicação real, o projet
 
 ---
 
-## 🚀 Como Executar o Projeto
+## Como Executar o Projeto
 
 ### Pré-requisitos
 - Python 3.10 ou superior instalado.
