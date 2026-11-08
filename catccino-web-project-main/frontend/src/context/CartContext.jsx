@@ -1,45 +1,49 @@
-import { createContext, useContext, useMemo, useState, useCallback } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]); // [{ id, name, price, qty }]
+  // Inicializa o estado tentando pegar do localStorage. Se não tiver, começa vazio.
+  const [itens, setItens] = useState(() => {
+    const carrinhoSalvo = localStorage.getItem("catccino_cart");
+    return carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
+  });
 
-  const addItem = useCallback((product) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
-      if (existing) {
-        return prev.map((i) => (i.id === product.id ? { ...i, qty: i.qty + 1 } : i));
+  // Sempre que o 'itens' mudar, salva no localStorage
+  useEffect(() => {
+    localStorage.setItem("catccino_cart", JSON.stringify(itens));
+  }, [itens]);
+
+  const adicionarItem = (produto) => {
+    setItens(prev => {
+      const existe = prev.find(item => item.id === produto.id);
+      if (existe) {
+        return prev.map(item => item.id === produto.id ? { ...item, quantidade: item.quantidade + 1 } : item);
       }
-      return [...prev, { id: product.id, name: product.name, price: Number(product.price), qty: 1 }];
+      return [...prev, { ...produto, quantidade: 1 }];
     });
-  }, []);
+  };
 
-  const changeQty = useCallback((productId, delta) => {
-    setItems((prev) =>
-      prev
-        .map((i) => (i.id === productId ? { ...i, qty: i.qty + delta } : i))
-        .filter((i) => i.qty > 0),
-    );
-  }, []);
+  const removerItem = (produtoId) => {
+    setItens(prev => {
+      const item = prev.find(i => i.id === produtoId);
+      if (item.quantidade > 1) {
+        return prev.map(i => i.id === produtoId ? { ...i, quantidade: i.quantidade - 1 } : i);
+      }
+      return prev.filter(i => i.id !== produtoId);
+    });
+  };
 
-  const clear = useCallback(() => setItems([]), []);
+  const limparCarrinho = () => setItens([]);
 
-  const { total, count } = useMemo(
-    () => ({
-      total: items.reduce((acc, i) => acc + i.price * i.qty, 0),
-      count: items.reduce((acc, i) => acc + i.qty, 0),
-    }),
-    [items],
+  const totalItens = itens.reduce((acc, item) => acc + item.quantidade, 0);
+  const valorTotal = itens.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+
+  return (
+    <CartContext.Provider value={{ itens, adicionarItem, removerItem, limparCarrinho, totalItens, valorTotal }}>
+      {children}
+    </CartContext.Provider>
   );
-
-  const value = { items, addItem, changeQty, clear, total, count };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart precisa estar dentro de um CartProvider");
-  return ctx;
-}
+export const useCart = () => useContext(CartContext);

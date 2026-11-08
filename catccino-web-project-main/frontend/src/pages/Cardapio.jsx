@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext.jsx"; // <-- Importação do Carrinho
 
 // Dados dos produtos com as imagens mapeadas
 const PRODUTOS = [
@@ -29,20 +30,22 @@ const PRODUTOS = [
 
 export default function Cardapio() {
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
+  const [mensagemErro, setMensagemErro] = useState("");
 
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [mensagemErro, setMensagemErro] = useState("");
+  
+  // Puxa a função de adicionar item do nosso CartContext
+  const { adicionarItem } = useCart(); 
 
-  function handleAdd() {
+  function handleAdd(produto) {
     if (!isAuthenticated) {
       setMensagemErro("Para continuar com o seu pedido, entre na sua conta.");
       setTimeout(() => setMensagemErro(""), 4000);
       return;
     }
     
-    // Se estiver logado, redireciona para a página de pedidos
-    navigate("/pedidos"); 
+    adicionarItem(produto);
   }
 
   const produtosFiltrados = categoriaAtiva === "Todos" 
@@ -79,9 +82,11 @@ export default function Cardapio() {
         </div>
       </div>
 
-      {/* ALERTA DE LOGIN (Fica aqui, no topo do conteúdo, e não dentro do botão) */}
+      {/* ALERTA FLUTUANTE (Usado tanto para erro de login quanto para sucesso no carrinho) */}
       {mensagemErro && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-red-600 px-6 py-3 text-white shadow-lg font-semibold animate-bounce">
+        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 rounded-lg px-6 py-3 text-white shadow-lg font-semibold animate-bounce ${
+          mensagemErro.includes("adicionado") ? "bg-green-600" : "bg-red-600"
+        }`}>
           {mensagemErro}
         </div>
       )}
@@ -97,7 +102,7 @@ export default function Cardapio() {
         {["Todos", "Bebidas", "Comidas"].map((cat) => (
           <button
             key={cat}
-            onClick={() => setCategoriaAtiva(cat)} // <-- CORRIGIDO AQUI (era handleAdd)
+            onClick={() => setCategoriaAtiva(cat)} 
             className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors cursor-pointer ${
               categoriaAtiva === cat 
                 ? "bg-coffee text-white" 
@@ -134,9 +139,9 @@ export default function Cardapio() {
               <div className="flex items-center justify-between mt-auto">
                 <span className="font-bold text-coffee text-lg">R$ {produto.preco.toFixed(2)}</span>
                 
-                {/* BOTÃO ADICIONAR COM A FUNÇÃO CONECTADA */}
+                {/* BOTÃO ADICIONAR COM O PRODUTO SENDO PASSADO COMO PARÂMETRO */}
                 <button 
-                  onClick={handleAdd} 
+                  onClick={() => handleAdd(produto)} 
                   className="rounded-lg bg-caramel px-4 py-2 text-sm font-bold text-white hover:bg-coffee transition-colors cursor-pointer"
                 >
                   Adicionar pedido

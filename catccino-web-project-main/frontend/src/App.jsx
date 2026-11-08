@@ -12,6 +12,9 @@ import NotFound from "./pages/NotFound.jsx";
 import Cardapio from "./pages/Cardapio.jsx";
 import Adocao from "./pages/Adocao.jsx";
 import RecuperarSenha from "./pages/RecuperarSenha.jsx";
+import FormularioAdocao from "./pages/FormularioAdocao.jsx";
+import Pagamento from "./pages/Pagamento.jsx";
+import Perfil from "./pages/Perfil.jsx";
 
 import { SECRET_ADMIN_PATH } from "./constants.js";
 import { ChatWidget } from "./components/ChatWidget.jsx";
@@ -37,6 +40,10 @@ export default function App() {
           <Route path="/pedidos" element={<Orders />} />
           <Route path="/pedidos/:orderId" element={<OrderDetail />} />
           <Route path="/cozinha" element={<Kitchen />} />
+          <Route path="/adocao/:id" element={<FormularioAdocao />} />
+          <Route path="/pagamento" element={<Pagamento />} />
+          <Route path="/perfil" element={<Perfil />} />
+
           <Route path={SECRET_ADMIN_PATH} element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

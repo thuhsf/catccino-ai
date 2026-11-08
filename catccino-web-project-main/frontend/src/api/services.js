@@ -63,7 +63,7 @@ export const notificationApi = {
 
 export const aiApi = {
   // Envia a mensagem para a nossa API em Python (FastAPI)
-  chat: (mensagem) => 
-    apiClient.post("http://127.0.0.1:8000/chat", { mensagem })
+  chat: (mensagem, qtdGatos) => 
+    apiClient.post("http://127.0.0.1:8000/chat", { mensagem, qtdGatos: qtdGatos })
       .then((r) => r.data.resposta),
 };

@@ -21,13 +21,13 @@ export default function Menu() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
               to="/cardapio" 
-              className="rounded-full bg-caramel px-8 py-3 text-base font-bold text-white transition-transform hover:-translate-y-1 hover:shadow-warm"
+              className="rounded-full border-2 border-cream px-8 py-3 text-base font-bold text-cream transition-all duration-300 hover:-translate-y-1 hover:bg-caramel hover:border-caramel hover:text-white hover:shadow-warm"
             >
               Ver o nosso cardápio
             </Link>
             <Link 
               to="/adocao" 
-              className="rounded-full border-2 border-cream px-8 py-3 text-base font-bold text-cream transition-transform hover:-translate-y-1 hover:bg-cream/10"
+              className="rounded-full border-2 border-cream px-8 py-3 text-base font-bold text-cream transition-all duration-300 hover:-translate-y-1 hover:bg-caramel hover:border-caramel hover:text-white hover:shadow-warm"
             >
               Conhecer os nossos gatinhos
             </Link>

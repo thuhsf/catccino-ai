@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { aiApi } from "../api/services";
+import { GATOS } from "../data/gatos.js";
 
-// 1. Aqui estão as opções de botões!
 const sugestoes = [
   "Qual o horário de funcionamento?",
   "Quais gatos estão para adoção?",
@@ -9,15 +10,20 @@ const sugestoes = [
   "Vocês têm opções sem lactose?"
 ];
 
+const MENSAGEM_INICIAL = {
+  role: "assistant",
+  content: "Olá! Seja bem-vindo ao Catccino. \n\nSou a assistente virtual da cafeteria. Posso te ajudar com dúvidas sobre o cardápio, horários ou adoção de gatinhos. \n\nComo posso te ajudar hoje?"
+};
+
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [mensagem, setMensagem] = useState("");
-  const [historico, setHistorico] = useState([
-    { role: "assistant", content: "Olá! Sou a assistente do Catccino. Como posso ajudar com o cardápio ou adoções? 🐈☕" }
-  ]);
+  const [historico, setHistorico] = useState([MENSAGEM_INICIAL]);
   const [carregando, setCarregando] = useState(false);
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
+  
+  const navigate = useNavigate();
 
-  // Função principal que envia a mensagem (seja digitada ou clicada)
   const enviarMensagem = async (texto) => {
     if (!texto.trim()) return;
 
@@ -25,13 +31,22 @@ export function ChatWidget() {
     setHistorico((prev) => [...prev, novaMensagem]);
     setMensagem("");
     setCarregando(true);
+    setMostrarSugestoes(false); 
 
     try {
-      const respostaIA = await aiApi.chat(texto);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Tempo esgotado")), 15000)
+      );
+
+      const respostaIA = await Promise.race([aiApi.chat(texto, GATOS.length), timeout]);
+      
       setHistorico((prev) => [...prev, { role: "assistant", content: respostaIA }]);
     } catch (error) {
       console.error(error);
-      setHistorico((prev) => [...prev, { role: "assistant", content: "Ops, tive um problema para me conectar. O servidor de IA está ligado?" }]);
+      setHistorico((prev) => [...prev, { 
+        role: "assistant", 
+        content: "Ops, não consegui me conectar ao meu cérebro de IA agora. O servidor Python (uvicorn) está rodando?" 
+      }]);
     } finally {
       setCarregando(false);
     }
@@ -43,77 +58,145 @@ export function ChatWidget() {
   };
 
   return (
-    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 1000 }}>
+    <div style={{ position: "fixed", bottom: "20px", right: "10%", zIndex: 1000 }}>
+      
+      {/* BOTÃO FLUTUANTE */}
       {!isOpen && (
-          <button 
+        <button 
           onClick={() => setIsOpen(true)}
-          style={{ 
-            background: "none", // Remove a cor de fundo
-            border: "none",     // Remove a borda marrom
-            boxShadow: "none",  // Remove a sombra
-            cursor: "pointer", 
-            padding: 0,
-            transition: "transform 0.2s", // Efeito de transição suave
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"} // Aumenta levemente ao passar o mouse
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, transition: "transform 0.2s" }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
           onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
         >
           <img 
             src="/chat-icon.png" 
             alt="Abrir Chat" 
-            style={{ width: "90px", height: "90px", objectFit: "contain" }} 
+            style={{ width: "100px", height: "100px", objectFit: "contain", filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.2))" }} 
           />
         </button>
       )}
 
+      {/* JANELA DO CHAT */}
       {isOpen && (
-        <div style={{ width: "350px", height: "500px", backgroundColor: "white", borderRadius: "10px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ backgroundColor: "#8B5A2B", color: "white", padding: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontSize: "16px" }}>Assistente Catccino</h3>
-            <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "18px" }}>✖</button>
+        <div className="flex flex-col w-[380px] h-[550px] bg-white rounded-2xl shadow-2xl border border-line overflow-hidden">
+          
+          {/* Cabeçalho */}
+          <div className="bg-coffee p-4 flex justify-between items-center shadow-md">
+            <h3 className="font-bold text-lg" style={{ color: "#e6ccb2" }}>
+              Assistente Catccino
+            </h3>
+            <button onClick={() => setIsOpen(false)} className="text-white hover:text-cream-2 text-xl font-bold cursor-pointer">
+              ✕
+            </button>
           </div>
 
-          <div style={{ flex: 1, padding: "15px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px", backgroundColor: "#f9f9f9" }}>
+          {/* Histórico de Mensagens */}
+          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-cream/30">
             {historico.map((msg, index) => (
-              <div key={index} style={{ alignSelf: msg.role === "user" ? "flex-end" : "flex-start", backgroundColor: msg.role === "user" ? "#8B5A2B" : "#e5e5ea", color: msg.role === "user" ? "white" : "black", padding: "10px 15px", borderRadius: "15px", maxWidth: "80%", fontSize: "14px" }}>
+              <div 
+                key={index} 
+                className={`max-w-[85%] p-3 text-sm shadow-sm ${
+                  msg.role === "user" 
+                    ? "self-end bg-coffee text-white rounded-2xl rounded-tr-sm" 
+                    : "self-start bg-white text-ink border border-line rounded-2xl rounded-tl-sm"
+                }`}
+              >
                 {msg.content}
+                
+                {/* BOTÃO "VER GATINHOS" */}
+                {msg.role === "assistant" && 
+                 index > 0 && 
+                 (msg.content.toLowerCase().includes("gatinhos") || 
+                  msg.content.toLowerCase().includes("gatos") ||
+                  msg.content.toLowerCase().includes("adoção") ||
+                  msg.content.toLowerCase().includes("adotar")) && (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      navigate("/adocao");
+                    }}
+                    className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
+                  >
+                    Ver gatinhos disponíveis
+                  </button>
+                )}
+
+                {/* BOTÃO "CONHECER O MENU" */}
+                {msg.role === "assistant" && 
+                 index > 0 && 
+                 (msg.content.toLowerCase().includes("cardápio") || 
+                  msg.content.toLowerCase().includes("menu")) && (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      navigate("/cardapio");
+                    }}
+                    className="mt-3 w-full flex items-center justify-center bg-coffee text-white rounded-lg py-2 text-xs font-bold hover:bg-coffee-dark transition-colors cursor-pointer"
+                  >
+                    Conhecer o menu
+                  </button>
+                )}
               </div>
             ))}
-            {carregando && <div style={{ alignSelf: "flex-start", color: "#888", fontSize: "12px", fontStyle: "italic" }}>A assistente está digitando...</div>}
+            
+            {carregando && (
+              <div className="self-start bg-white border border-line text-ink-soft p-3 rounded-2xl rounded-tl-sm text-xs italic">
+                A assistente está digitando...
+              </div>
+            )}
           </div>
 
-          {/* 2. AQUI ESTÃO OS BOTÕES DE SUGESTÃO */}
-          <div style={{ padding: "10px", backgroundColor: "#fff", display: "flex", flexWrap: "wrap", gap: "8px", borderTop: "1px solid #eee" }}>
-            {sugestoes.map((sugestao, index) => (
+          {/* ÁREA DE PERGUNTAS FREQUENTES (Retrátil) */}
+          <div className="px-4 py-3 bg-white border-t border-line">
+            {!mostrarSugestoes ? (
               <button
-                key={index}
-                onClick={() => enviarMensagem(sugestao)}
-                disabled={carregando}
-                style={{
-                  backgroundColor: "#f0f0f0",
-                  border: "1px solid #ddd",
-                  borderRadius: "15px",
-                  padding: "6px 12px",
-                  fontSize: "12px",
-                  cursor: carregando ? "not-allowed" : "pointer",
-                  color: "#333"
-                }}
+                onClick={() => setMostrarSugestoes(true)}
+                className="w-full flex items-center justify-center gap-2 bg-cream-2 border border-coffee text-coffee rounded-lg py-2.5 text-sm font-semibold hover:bg-coffee hover:text-white transition-colors cursor-pointer"
               >
-                {sugestao}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                </svg>
+                Ver perguntas frequentes
               </button>
-            ))}
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-bold text-ink-soft uppercase">Perguntas frequentes</span>
+                  <button onClick={() => setMostrarSugestoes(false)} className="text-xs text-coffee font-bold hover:underline cursor-pointer">
+                    Fechar
+                  </button>
+                </div>
+                {sugestoes.map((sugestao, index) => (
+                  <button
+                    key={index}
+                    onClick={() => enviarMensagem(sugestao)}
+                    disabled={carregando}
+                    className="w-full text-left bg-white border border-line rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-cream-2 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {sugestao}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", padding: "10px", borderTop: "1px solid #ddd", backgroundColor: "white" }}>
+          {/* Input de Mensagem */}
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 bg-white border-t border-line">
             <input
               type="text"
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
               placeholder="Digite sua pergunta..."
-              style={{ flex: 1, padding: "10px", border: "1px solid #ccc", borderRadius: "20px", outline: "none", fontSize: "14px" }}
+              className="flex-1 bg-cream/50 border border-line rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-coffee"
             />
-            <button type="submit" disabled={carregando} style={{ marginLeft: "10px", backgroundColor: "#8B5A2B", color: "white", border: "none", borderRadius: "20px", padding: "10px 15px", cursor: carregando ? "not-allowed" : "pointer" }}>
-              Enviar
+            <button 
+              type="submit" 
+              disabled={carregando} 
+              className="bg-coffee text-white p-2.5 rounded-full hover:bg-coffee-dark transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center w-10 h-10"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
+              </svg>
             </button>
           </form>
         </div>

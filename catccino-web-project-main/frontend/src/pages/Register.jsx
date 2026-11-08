@@ -120,7 +120,7 @@ export default function Register() {
                 onChange={update} // <-- Corrigido para update
                 required
                 className="w-full rounded-lg border border-line bg-cream/50 px-4 py-3 text-sm focus:border-coffee focus:outline-none focus:ring-1 focus:ring-coffee"
-                placeholder="Seu nome completo"
+                placeholder="Seu nome"
               />
             </div>
 
