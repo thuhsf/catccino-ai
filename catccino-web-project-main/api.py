@@ -29,8 +29,10 @@ vectorstore = Chroma(
     embedding_function=embeddings
 )
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
-llm = ChatOllama(model="llama3.2:1b", temperature=0.3)
+# Aumentamos para k=4 para buscar mais informações no banco
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+
+llm = ChatOllama(model="llama3.2:1b", temperature=0.1)
 
 # 2. Define o formato da pergunta que o React vai enviar
 class Pergunta(BaseModel):
@@ -43,7 +45,7 @@ async def chat(pergunta: Pergunta):
     try:
         # Pega a hora atual do computador
         # hora_atual = datetime.now().hour
-        hora_atual = 10 # <-- Fixo para testar
+        hora_atual = 10  # Fixo para testar
 
         # REGRA DE NEGÓCIO: Loja fechada
         if hora_atual < 7 or hora_atual >= 17:
@@ -51,17 +53,49 @@ async def chat(pergunta: Pergunta):
                 "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h!"
             }
 
-        # AQUI: O prompt é criado DENTRO da função para ler o qtd_gatos
+        # REGRA: Resposta fixa para adoção (ignora o banco antigo)
+        if "adotar" in pergunta.mensagem.lower() or "adoção" in pergunta.mensagem.lower():
+            return {
+                "resposta": "Para adotar um gatinho, você precisa ter mais de 18 anos e preencher o formulário de adoção. A ONG entrará em contato em até 48h."
+            }
+
+        # REGRA: Horário de funcionamento
+        if "horário" in pergunta.mensagem.lower() or "horario" in pergunta.mensagem.lower() or "funcionamento" in pergunta.mensagem.lower():
+            return {
+                "resposta": "O Catccino funciona de terça-feira a domingo, das 07:00 às 17:00."
+            }
+
+        # REGRA: Preço do Latte Gatinho
+        if "latte" in pergunta.mensagem.lower() or "gatinho" in pergunta.mensagem.lower():
+            return {
+                "resposta": "O Latte Gatinho custa R$ 15,00 e é a nossa bebida mais pedida! Ele tem uma arte no café em formato de patinha."
+            }
+
+        # Prompt criado DENTRO da função para conseguir ler o qtd_gatos
         system_prompt = (
             "Você é a assistente virtual do Catccino, uma cafeteria temática de gatos. "
             "Seja educada e simpática. "
             "NUNCA utilize emojis em suas respostas. Responda apenas com texto puro. "
+
+            "REGRAS DE CONVERSA: "
+            "1. Se o usuário disser 'oi', 'olá' ou 'bom dia', responda APENAS com uma saudação amigável (ex: 'Olá! Como posso ajudar?'). NÃO adicione despedidas. "
+            "2. Se o usuário disser 'tchau', 'até logo' ou 'até mais', responda APENAS com uma despedida (ex: 'Até logo! Volte sempre.'). NÃO adicione saudações. "
+            "3. Se o usuário fizer qualquer outra pergunta, NÃO use saudações ou despedidas, vá direto ao ponto. "
+
             f"Atualmente, temos exatamente {pergunta.qtd_gatos} gatinhos disponíveis para adoção. "
-            "Se o usuário perguntar quais são, diga a quantidade e instrua-o a clicar no botão 'Ver gatinhos disponíveis' abaixo ou acessar a aba de Adoção. NÃO liste os nomes dos gatos. "
-            "Se o usuário perguntar sobre bebidas, comidas ou o que vocês vendem, responda exatamente assim: 'Há uma porção de variedades de comidas e cafés no nosso cardápio, venha dar uma conferida!' "
-            "NÃO liste os produtos nem os preços, apenas use essa frase. "
-            "Use o contexto abaixo para responder a outras perguntas do cliente. "
-            "Se a resposta não estiver no contexto, diga educadamente que não sabe e sugira que o cliente pergunte ao atendente no balcão.\n\n"
+            "Se o usuário perguntar especificamente sobre os gatinhos, diga a quantidade e instrua-o a clicar no botão 'Ver gatinhos disponíveis'. "
+
+            "Se o usuário perguntar sobre bebidas, comidas ou o que vocês vendem, responda EXATAMENTE e APENAS a seguinte frase: 'Há uma porção de variedades de comidas e cafés no nosso cardápio, venha dar uma conferida!' "
+            "NÃO liste os produtos, NÃO liste os preços e NÃO diga 'Selecione uma opção'. Apenas diga a frase acima. "
+
+            "REGRA DE ITENS INEXISTENTES: Se o usuário perguntar por um item específico (ex: refrigerante, pizza, hambúrguer, suco) e esse item NÃO estiver listado no contexto do cardápio, responda EXATAMENTE: 'Não, não temos esse alimento ou essa bebida disponível no cardápio do Catccino.' NUNCA invente produtos que não estão no cardápio. "
+
+            "REGRA DE OURO PARA PERGUNTAS ALEATÓRIAS: "
+            "Se a pergunta do usuário não tiver NENHUMA relação com o Catccino, com café, com o cardápio ou com os gatinhos (por exemplo: 'O que é uma vaca?', 'Quem descobriu o Brasil?'), você deve responder EXATAMENTE a seguinte frase: "
+            "'Desculpe, não tenho informações sobre isso. Sou a assistente do Catccino e só posso ajudar com dúvidas sobre a nossa cafeteria, cardápio ou adoção de gatinhos.' "
+            "NÃO tente adivinhar a resposta, NÃO fale sobre gatinhos ou adoção se a pergunta não for sobre isso. "
+
+            "Use o contexto abaixo para responder. "
             "Contexto:\n{context}"
         )
 

@@ -1,1 +1,3 @@
-"Para adotar um gatinho no Catccino, o interessado deve ter mais de 18 anos, preencher um formulário de adoção e passar por uma entrevista com a equipe da ONG parceira. É necessário apresentar documento de identidade (RG ou CNH) e comprovante de residência. Após a aprovação, o adotante assina um termo de responsabilidade e paga uma taxa simbólica de R$ 50,00 que cobre parte das vacinas e da castração. O Catccino faz o acompanhamento do gato através de fotos enviadas pelo adotante a cada três meses durante o primeiro ano."
+# Regras de Adoção do Catccino
+
+Se o usuário perguntar COMO ADOTAR um gato, responda de forma breve e direta: "Que ótimo que você quer adotar! Para começar, você precisa ter mais de 18 anos e preencher o nosso formulário de adoção responsável. Entraremos em contato em até 48h para conversar melhor."

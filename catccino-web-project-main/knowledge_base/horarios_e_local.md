@@ -1,1 +1,1 @@
-"A cafeteria Catccino funciona de terça-feira a domingo, das 07:00 às 17:00. Fechamos para almoço das 12:00 às 13:00. Aos feriados, funcionamos das 08:00 às 16:00. O nosso endereço fica na Rua dos Gatinhos, número 123, no bairro Centro. Não temos estacionamento próprio, mas há um estacionamento pago a uma quadra de distância. A entrada de animais de estimação é permitida apenas na área externa."
+"O Catccino funciona de terça-feira a domingo, das 7h às 17h."
