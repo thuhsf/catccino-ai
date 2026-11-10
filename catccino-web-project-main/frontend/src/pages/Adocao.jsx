@@ -1,7 +1,20 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { GATOS } from "../data/gatos.js"; // Importa a lista centralizada
+import { GATOS as GATOS_INICIAIS } from "../data/gatos.js";
 
 export default function Adocao() {
+  const [gatos, setGatos] = useState([]);
+
+  useEffect(() => {
+    const salvos = localStorage.getItem("catccino_gatos");
+    if (salvos) {
+      setGatos(JSON.parse(salvos));
+    } else {
+      setGatos(GATOS_INICIAIS);
+      localStorage.setItem("catccino_gatos", JSON.stringify(GATOS_INICIAIS));
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-5xl px-5 py-10">
       <div className="mb-10 text-center">
@@ -13,10 +26,9 @@ export default function Adocao() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
-        {GATOS.map((gato) => (
+        {gatos.map((gato) => (
           <div key={gato.id} className="overflow-hidden rounded-2xl bg-white shadow-md border border-line flex flex-col">
             
-            {/* Foto do Gato */}
             <div className="h-48 w-full bg-cream-2 overflow-hidden">
               {gato.img ? (
                 <img 
@@ -33,7 +45,7 @@ export default function Adocao() {
             <div className="p-6 flex flex-col flex-1">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-display text-2xl font-bold text-ink">{gato.nome}</h3>
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${gato.status === "Disponível" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                   {gato.status}
                 </span>
               </div>

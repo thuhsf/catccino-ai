@@ -1,401 +1,311 @@
-import { useCallback, useEffect, useState } from "react";
-import { menuApi } from "../api/services.js";
+import { useState, useEffect } from "react";
+import { GATOS as GATOS_INICIAIS } from "../data/gatos.js";
 import { useToast } from "../context/ToastContext.jsx";
-import { EmptyState, money } from "../components/UI.jsx";
 
 export default function Admin() {
-	const [categories, setCategories] = useState([]);
-	const [products, setProducts] = useState([]);
-	const [status, setStatus] = useState("loading");
-	const showToast = useToast();
+  const showToast = useToast();
+  const [abaAtiva, setAbaAtiva] = useState("gatos");
+  
+  // --- ESTADOS DE GATOS ---
+  const [gatos, setGatos] = useState([]);
+  const [editandoId, setEditandoId] = useState(null); // ID do gato em edição
+  const [formGato, setFormGato] = useState({ 
+    nome: "", idade: "", sexo: "Macho", cor: "", desc: "", img: "", posicao: "center 50%" 
+  });
 
-	const load = useCallback(() => {
-		setStatus("loading");
-		Promise.all([menuApi.listCategories(), menuApi.listProducts()])
-			.then(([cats, prods]) => {
-				setCategories(cats);
-				setProducts(prods);
-				setStatus("ready");
-			})
-			.catch((err) => {
-				showToast(err.message, true);
-				setStatus("error");
-			});
-	}, [showToast]);
+  // --- ESTADOS DE PRODUTOS ---
+  const [produtos, setProdutos] = useState([]);
+  const [formProduto, setFormProduto] = useState({ 
+    nome: "", desc: "", preco: "", cat: "Bebidas", img: "" 
+  });
 
-	useEffect(() => {
-		load();
-	}, [load]);
+  // Carrega dados iniciais
+  useEffect(() => {
+    const salvosGatos = localStorage.getItem("catccino_gatos");
+    setGatos(salvosGatos ? JSON.parse(salvosGatos) : GATOS_INICIAIS);
+    
+    const salvosProdutos = localStorage.getItem("catccino_produtos");
+    setProdutos(salvosProdutos ? JSON.parse(salvosProdutos) : []);
+  }, []);
 
-	return (
-		<section>
-			<div className="mb-2">
-				<h2 className="text-2xl">Painel administrativo</h2>
-				<p className="mt-1 text-sm text-ink-soft">
-					Cadastre categorias e produtos do cardápio.
-				</p>
-			</div>
-			<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-				<CategoryPanel categories={categories} onChanged={load} />
-				<ProductPanel categories={categories} products={products} status={status} onChanged={load} />
-			</div>
-		</section>
-	);
-}
+  // --- FUNÇÕES DE IMAGEM ---
+  function handleImagemGato(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormGato({ ...formGato, img: reader.result });
+    };
+    reader.readAsDataURL(file);
+  }
 
-function CategoryPanel({ categories, onChanged }) {
-	const showToast = useToast();
-	const [form, setForm] = useState({ name: "", slug: "" });
-	const [saving, setSaving] = useState(false);
+  function handleImagemProduto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormProduto({ ...formProduto, img: reader.result });
+    };
+    reader.readAsDataURL(file);
+  }
 
-	async function handleCreate(e) {
-		e.preventDefault();
-		setSaving(true);
-		try {
-			await menuApi.createCategory(form);
-			showToast("Categoria criada com sucesso.");
-			setForm({ name: "", slug: "" });
-			onChanged();
-		} catch (err) {
-			showToast(err.message, true);
-		} finally {
-			setSaving(false);
-		}
-	}
+  // --- FUNÇÕES DE GATOS ---
+  function salvarGatos(novaLista) {
+    setGatos(novaLista);
+    localStorage.setItem("catccino_gatos", JSON.stringify(novaLista));
+  }
 
-	async function handleDelete(id) {
-		try {
-			await menuApi.deleteCategory(id);
-			showToast("Categoria removida.");
-			onChanged();
-		} catch (err) {
-			showToast(err.message, true);
-		}
-	}
+  function handleSubmitGato(e) {
+    e.preventDefault();
+    
+    if (editandoId) {
+      // Modo Edição: Atualiza o gato existente
+      const listaAtualizada = gatos.map(g => 
+        g.id === editandoId ? { ...formGato, id: editandoId, status: g.status } : g
+      );
+      salvarGatos(listaAtualizada);
+      showToast("Gatinho atualizado!");
+      setEditandoId(null);
+    } else {
+      // Modo Criação: Adiciona um novo gato
+      const novoGato = { ...formGato, id: Date.now(), status: "Disponível" };
+      salvarGatos([...gatos, novoGato]);
+      showToast("Gatinho adicionado!");
+    }
+    
+    // Reseta o formulário
+    setFormGato({ nome: "", idade: "", sexo: "Macho", cor: "", desc: "", img: "", posicao: "center 50%" });
+  }
 
-	return (
-		<div className="rounded-2xl border border-line bg-paper p-5">
-			<h3 className="text-lg">Categorias</h3>
+  function iniciarEdicao(gato) {
+    setEditandoId(gato.id);
+    setFormGato({
+      nome: gato.nome,
+      idade: gato.idade,
+      sexo: gato.sexo,
+      cor: gato.cor,
+      desc: gato.desc,
+      img: gato.img,
+      posicao: gato.posicao || "center 50%"
+    });
+    // Rola a tela para o topo (para ver o formulário)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-			<form onSubmit={handleCreate} className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-end">
-				<label className="flex-1">
-					<span className="mb-1 block text-xs font-semibold text-ink-soft">Nome (4–12 caracteres)</span>
-					<input
-						required
-						minLength={4}
-						maxLength={12}
-						value={form.name}
-						onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-						style={{ borderWidth: "1.5px" }}
-						className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:border-coffee focus:outline-none"
-					/>
-				</label>
-				<label className="flex-1">
-					<span className="mb-1 block text-xs font-semibold text-ink-soft">Slug (4–12 caracteres)</span>
-					<input
-						required
-						minLength={4}
-						maxLength={12}
-						value={form.slug}
-						onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-						style={{ borderWidth: "1.5px" }}
-						className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:border-coffee focus:outline-none"
-					/>
-				</label>
-				<button
-					type="submit"
-					disabled={saving}
-					className="rounded-full bg-coffee px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
-				>
-					Criar
-				</button>
-			</form>
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setFormGato({ nome: "", idade: "", sexo: "Macho", cor: "", desc: "", img: "", posicao: "center 50%" });
+  }
 
-			<ul className="mt-4 flex flex-col gap-2">
-				{categories.length === 0 && (
-					<li className="text-sm text-ink-soft">Nenhuma categoria cadastrada ainda.</li>
-				)}
-				{categories.map((c) => (
-					<li
-						key={c.id}
-						className="flex items-center justify-between rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-					>
-						<span>
-							<b>{c.name}</b> <span className="text-ink-soft">({c.slug})</span>
-						</span>
-						<button onClick={() => handleDelete(c.id)} className="text-xs font-semibold text-rust">
-							excluir
-						</button>
-					</li>
-				))}
-			</ul>
-		</div>
-	);
-}
+  function toggleStatusGato(id) {
+    const novaLista = gatos.map(g => 
+      g.id === id ? { ...g, status: g.status === "Disponível" ? "Adotado" : "Disponível" } : g
+    );
+    salvarGatos(novaLista);
+    showToast("Status do gatinho atualizado!");
+  }
 
-const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB — mesmo limite do multer no menu-service
+  // --- FUNÇÕES DE PRODUTOS ---
+  function salvarProdutos(novaLista) {
+    setProdutos(novaLista);
+    localStorage.setItem("catccino_produtos", JSON.stringify(novaLista));
+  }
 
-function ProductPanel({ categories, products, status, onChanged }) {
-	const showToast = useToast();
-	const emptyForm = { name: "", description: "", price: "", categoryId: "", available: true };
-	const [form, setForm] = useState(emptyForm);
-	const [imgFile, setImgFile] = useState(null);
-	const [imgPreview, setImgPreview] = useState(null);
-	const [saving, setSaving] = useState(false);
-	const [editingId, setEditingId] = useState(null);
-	const [editDraft, setEditDraft] = useState({});
+  function handleAddProduto(e) {
+    e.preventDefault();
+    const novoProduto = { ...formProduto, id: Date.now(), preco: parseFloat(formProduto.preco) };
+    salvarProdutos([...produtos, novoProduto]);
+    setFormProduto({ nome: "", desc: "", preco: "", cat: "Bebidas", img: "" });
+    showToast("Produto adicionado!");
+  }
 
-	function update(e) {
-		const { name, value, type, checked } = e.target;
-		setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
-	}
+  function removerProduto(id) {
+    if (window.confirm("Tem certeza que deseja remover este produto?")) {
+      salvarProdutos(produtos.filter(p => p.id !== id));
+      showToast("Produto removido.");
+    }
+  }
 
-	useEffect(() => {
-		return () => {
-			if (imgPreview) URL.revokeObjectURL(imgPreview);
-		};
-	}, [imgPreview]);
+  return (
+    <section className="mx-auto max-w-5xl px-5 py-10">
+      <div className="mb-6">
+        <h2 className="font-display text-3xl font-bold text-ink">Painel administrativo</h2>
+        <p className="text-sm text-ink-soft">Gerencie os gatinhos e o cardápio do Catccino.</p>
+      </div>
 
-	function handleImageChange(e) {
-		const file = e.target.files?.[0];
-		if (imgPreview) URL.revokeObjectURL(imgPreview);
+      {/* ABAS */}
+      <div className="flex gap-4 mb-8 border-b border-line pb-2">
+        <button 
+          onClick={() => setAbaAtiva("gatos")} 
+          className={`font-bold pb-1 ${abaAtiva === "gatos" ? "text-coffee border-b-2 border-coffee" : "text-ink-soft"}`}
+        >
+          Adoção (Gatos)
+        </button>
+        <button 
+          onClick={() => setAbaAtiva("produtos")} 
+          className={`font-bold pb-1 ${abaAtiva === "produtos" ? "text-coffee border-b-2 border-coffee" : "text-ink-soft"}`}
+        >
+          Cardápio (Produtos)
+        </button>
+      </div>
 
-		if (!file) {
-			setImgFile(null);
-			setImgPreview(null);
-			return;
-		}
-		if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-			showToast("Formato de imagem inválido. Use PNG, JPG ou WEBP.", true);
-			e.target.value = "";
-			setImgFile(null);
-			setImgPreview(null);
-			return;
-		}
-		if (file.size > MAX_IMAGE_SIZE) {
-			showToast("Imagem maior que 5MB.", true);
-			e.target.value = "";
-			setImgFile(null);
-			setImgPreview(null);
-			return;
-		}
-		setImgFile(file);
-		setImgPreview(URL.createObjectURL(file));
-	}
+      {/* CONTEÚDO: GATOS */}
+      {abaAtiva === "gatos" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-line h-fit">
+            <h3 className="font-bold text-xl mb-4 text-ink">
+              {editandoId ? "Editar gatinho" : "Novo gatinho"}
+            </h3>
+            <form onSubmit={handleSubmitGato} className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Nome <span className="text-red-500">*</span></label>
+                <input required placeholder="Nome" value={formGato.nome} onChange={e => setFormGato({...formGato, nome: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Idade <span className="text-red-500">*</span></label>
+                <input required placeholder="Idade" value={formGato.idade} onChange={e => setFormGato({...formGato, idade: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Sexo <span className="text-red-500">*</span></label>
+                <select value={formGato.sexo} onChange={e => setFormGato({...formGato, sexo: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm cursor-pointer">
+                  <option value="Macho">Macho</option>
+                  <option value="Fêmea">Fêmea</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Cor <span className="text-red-500">*</span></label>
+                <input required placeholder="Cor" value={formGato.cor} onChange={e => setFormGato({...formGato, cor: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Descrição <span className="text-red-500">*</span></label>
+                <textarea required placeholder="Descrição" rows={2} value={formGato.desc} onChange={e => setFormGato({...formGato, desc: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm resize-none" />
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                {formGato.img && (
+                  <img src={formGato.img} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-line" style={{ objectPosition: formGato.posicao }} />
+                )}
+                <label className="cursor-pointer bg-cream-2 border border-line rounded-lg py-2 px-3 text-sm text-center font-semibold text-coffee hover:bg-cream transition-colors">
+                  Coloque uma imagem do(a) gatinho(a) aqui
+                  <input type="file" accept="image/*" onChange={handleImagemGato} className="hidden" />
+                </label>
+              </div>
 
-	function clearImage(inputEl) {
-		if (imgPreview) URL.revokeObjectURL(imgPreview);
-		setImgFile(null);
-		setImgPreview(null);
-		if (inputEl) inputEl.value = "";
-	}
+              {formGato.img && (
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-ink-soft">Ajuste o enquadramento da foto:</label>
+                  <input 
+                    type="range" min="0" max="100" 
+                    value={parseInt(formGato.posicao.split(" ")[1] || "50")}
+                    onChange={(e) => setFormGato({...formGato, posicao: `center ${e.target.value}%`})}
+                    className="w-full cursor-pointer"
+                  />
+                </div>
+              )}
 
-	async function handleCreate(e) {
-		e.preventDefault();
-		setSaving(true);
-		try {
-			await menuApi.createProduct({ ...form, imgFile });
-			showToast("Produto criado com sucesso.");
-			setForm(emptyForm);
-			clearImage(e.target.querySelector('input[type="file"]'));
-			onChanged();
-		} catch (err) {
-			showToast(err.message, true);
-		} finally {
-			setSaving(false);
-		}
-	}
+              <div className="flex gap-2 mt-2">
+                <button type="submit" className="flex-1 bg-coffee text-white rounded-lg py-2 font-bold hover:bg-coffee-dark">
+                  {editandoId ? "Salvar Alterações" : "Adicionar gato"}
+                </button>
+                {editandoId && (
+                  <button type="button" onClick={cancelarEdicao} className="bg-gray-200 text-gray-700 rounded-lg px-4 font-bold hover:bg-gray-300">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
 
-	function startEdit(p) {
-		setEditingId(p.id);
-		setEditDraft({ name: p.name, price: p.price, available: p.available });
-	}
+          <div className="md:col-span-2 flex flex-col gap-4">
+            {gatos.map(gato => (
+              <div key={gato.id} className="bg-white p-4 rounded-2xl border border-line flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img src={gato.img} alt={gato.nome} className="w-12 h-12 rounded-lg object-cover" style={{ objectPosition: gato.posicao }} />
+                  <div>
+                    <h3 className="font-bold text-ink">{gato.nome}</h3>
+                    <p className="text-xs text-ink-soft">{gato.idade} • {gato.sexo}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${gato.status === "Disponível" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {gato.status}
+                  </span>
+                  <button onClick={() => iniciarEdicao(gato)} className="text-xs font-bold text-blue-600 border border-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition-colors">
+                    Editar
+                  </button>
+                  <button onClick={() => toggleStatusGato(gato.id)} className="text-xs font-bold text-coffee border border-coffee px-3 py-1 rounded hover:bg-coffee hover:text-white">
+                    Mudar Status
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-	async function saveEdit(id) {
-		try {
-			await menuApi.updateProduct(id, editDraft);
-			showToast("Produto atualizado.");
-			setEditingId(null);
-			onChanged();
-		} catch (err) {
-			showToast(err.message, true);
-		}
-	}
+      {/* CONTEÚDO: PRODUTOS */}
+      {abaAtiva === "produtos" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-line h-fit">
+            <h3 className="font-bold text-xl mb-4 text-ink">Novo Produto</h3>
+            <form onSubmit={handleAddProduto} className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Nome <span className="text-red-500">*</span></label>
+                <input required placeholder="Nome do Produto" value={formProduto.nome} onChange={e => setFormProduto({...formProduto, nome: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Descrição <span className="text-red-500">*</span></label>
+                <textarea required placeholder="Descrição" rows={2} value={formProduto.desc} onChange={e => setFormProduto({...formProduto, desc: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Preço (R$) <span className="text-red-500">*</span></label>
+                <input required type="number" step="0.01" placeholder="Preço (R$)" value={formProduto.preco} onChange={e => setFormProduto({...formProduto, preco: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ink-soft">Categoria <span className="text-red-500">*</span></label>
+                <select value={formProduto.cat} onChange={e => setFormProduto({...formProduto, cat: e.target.value})} className="w-full border border-line rounded-lg p-2 text-sm cursor-pointer">
+                  <option value="Bebidas">Bebidas</option>
+                  <option value="Comidas">Comidas</option>
+                </select>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                {formProduto.img && (
+                  <img src={formProduto.img} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-line" />
+                )}
+                <label className="cursor-pointer bg-cream-2 border border-line rounded-lg py-2 px-3 text-sm text-center font-semibold text-coffee hover:bg-cream transition-colors">
+                  Coloque uma imagem do produto aqui
+                  <input type="file" accept="image/*" onChange={handleImagemProduto} className="hidden" />
+                </label>
+              </div>
 
-	return (
-		<div className="rounded-2xl border border-line bg-paper p-5">
-			<h3 className="text-lg">Produtos</h3>
+              <button type="submit" className="bg-coffee text-white rounded-lg py-2 font-bold hover:bg-coffee-dark">Adicionar Produto</button>
+            </form>
+          </div>
 
-			<form onSubmit={handleCreate} className="mt-3 flex flex-col gap-2.5">
-				<Field label="Nome (4–40)" name="name" value={form.name} onChange={update} required />
-				<label className="block">
-					<span className="mb-1 block text-xs font-semibold text-ink-soft">Descrição (8–300)</span>
-					<textarea
-						name="description"
-						required
-						minLength={8}
-						maxLength={300}
-						rows={2}
-						value={form.description}
-						onChange={update}
-						style={{ borderWidth: "1.5px" }}
-						className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:border-coffee focus:outline-none"
-					/>
-				</label>
-				<div className="flex flex-wrap gap-2.5">
-					<div className="flex-1">
-						<Field
-							label="Preço (R$)"
-							name="price"
-							type="number"
-							step="0.01"
-							min="0.01"
-							max="1000"
-							value={form.price}
-							onChange={update}
-							required
-						/>
-					</div>
-					<label className="flex-1">
-						<span className="mb-1 block text-xs font-semibold text-ink-soft">Categoria</span>
-						<select
-							name="categoryId"
-							required
-							value={form.categoryId}
-							onChange={update}
-							style={{ borderWidth: "1.5px" }}
-							className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:border-coffee focus:outline-none"
-						>
-							<option value="" disabled>
-								Selecione…
-							</option>
-							{categories.map((c) => (
-								<option key={c.id} value={c.id}>
-									{c.name}
-								</option>
-							))}
-						</select>
-					</label>
-				</div>
-				<label className="block">
-					<span className="mb-1 block text-xs font-semibold text-ink-soft">
-						Foto do produto (opcional, PNG/JPG/WEBP até 5MB)
-					</span>
-					<div className="flex items-center gap-3">
-						{imgPreview && (
-							<img
-								src={imgPreview}
-								alt="Pré-visualização"
-								className="h-14 w-14 flex-none rounded-lg border border-line object-cover"
-							/>
-						)}
-						<input
-							type="file"
-							accept="image/png,image/jpeg,image/jpg,image/webp"
-							onChange={handleImageChange}
-							className="flex-1 text-sm text-ink-soft file:mr-3 file:rounded-full file:border-0 file:bg-cream-2 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-coffee hover:file:bg-line"
-						/>
-					</div>
-				</label>
-				<label className="flex items-center gap-2 text-sm text-ink-soft">
-					<input type="checkbox" name="available" checked={form.available} onChange={update} />
-					Disponível para venda
-				</label>
-				<button
-					type="submit"
-					disabled={saving || categories.length === 0}
-					className="self-start rounded-full bg-coffee px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
-				>
-					Criar produto
-				</button>
-				{categories.length === 0 && (
-					<span className="text-xs text-ink-soft">Crie uma categoria primeiro.</span>
-				)}
-			</form>
-
-			<div className="mt-5">
-				{status === "loading" && <EmptyState>Carregando produtos…</EmptyState>}
-				{status === "ready" && products.length === 0 && <EmptyState>Nenhum produto cadastrado.</EmptyState>}
-				{status === "ready" && products.length > 0 && (
-					<ul className="flex flex-col gap-2">
-						{products.map((p) => (
-							<li key={p.id} className="rounded-lg border border-line bg-cream px-3 py-2.5 text-sm">
-								{editingId === p.id ? (
-									<div className="flex flex-wrap items-center gap-2">
-										<input
-											value={editDraft.name}
-											onChange={(e) => setEditDraft((d) => ({ ...d, name: e.target.value }))}
-											style={{ borderWidth: "1.5px" }}
-											className="min-w-0 flex-1 rounded border border-line bg-paper px-2 py-1"
-										/>
-										<input
-											type="number"
-											step="0.01"
-											value={editDraft.price}
-											onChange={(e) => setEditDraft((d) => ({ ...d, price: e.target.value }))}
-											style={{ borderWidth: "1.5px" }}
-											className="w-24 rounded border border-line bg-paper px-2 py-1"
-										/>
-										<label className="flex items-center gap-1 text-xs">
-											<input
-												type="checkbox"
-												checked={editDraft.available}
-												onChange={(e) => setEditDraft((d) => ({ ...d, available: e.target.checked }))}
-											/>
-											disponível
-										</label>
-										<button onClick={() => saveEdit(p.id)} className="text-xs font-semibold text-sage">
-											salvar
-										</button>
-										<button onClick={() => setEditingId(null)} className="text-xs text-ink-soft">
-											cancelar
-										</button>
-									</div>
-								) : (
-									<div className="flex items-center justify-between gap-2">
-										<span className="flex items-center gap-2.5">
-											{p.thumbnailUrl ? (
-												<img
-													src={p.thumbnailUrl}
-													alt={p.name}
-													className="h-9 w-9 flex-none rounded-md border border-line object-cover"
-												/>
-											) : (
-												<span className="flex h-9 w-9 flex-none items-center justify-center rounded-md border border-line bg-cream-2 text-xs">
-													☕
-												</span>
-											)}
-											<span>
-												<b>{p.name}</b>{" "}
-												<span className="text-ink-soft">
-													· {money(p.price)} · {p.available === false ? "indisponível" : "disponível"}
-												</span>
-											</span>
-										</span>
-										<button onClick={() => startEdit(p)} className="text-xs font-semibold text-coffee">
-											editar
-										</button>
-									</div>
-								)}
-							</li>
-						))}
-					</ul>
-				)}
-			</div>
-		</div>
-	);
-}
-
-function Field({ label, ...inputProps }) {
-	return (
-		<label className="block">
-			<span className="mb-1 block text-xs font-semibold text-ink-soft">{label}</span>
-			<input
-				{...inputProps}
-				style={{ borderWidth: "1.5px" }}
-				className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm focus:border-coffee focus:outline-none"
-			/>
-		</label>
-	);
+          <div className="md:col-span-2 flex flex-col gap-4">
+            {produtos.length === 0 && (
+              <p className="text-ink-soft text-sm">Nenhum produto adicionado ainda (os produtos padrão continuam no cardápio).</p>
+            )}
+            {produtos.map(produto => (
+              <div key={produto.id} className="bg-white p-4 rounded-2xl border border-line flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img src={produto.img} alt={produto.nome} className="w-12 h-12 rounded-lg object-cover" />
+                  <div>
+                    <h3 className="font-bold text-ink">{produto.nome}</h3>
+                    <p className="text-xs text-ink-soft">R$ {produto.preco.toFixed(2)} • {produto.cat}</p>
+                  </div>
+                </div>
+                <button onClick={() => removerProduto(produto.id)} className="text-xs font-bold text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-600 hover:text-white transition-colors">
+                  Excluir
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
