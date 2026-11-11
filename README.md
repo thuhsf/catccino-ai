@@ -44,14 +44,14 @@ O projeto foi dividido em duas camadas que se comunicam via API:
 
 ---
 
-## Tecnologias Utilizadas
+- ## 🛠️ Tecnologias Utilizadas
 
-- **LLM:** Ollama (Llama 3.2 1B rodando localmente).
-- **Embeddings Model:** OllamaEmbeddings (nomic-embed-text).
-- **Vector Store:** ChromaDB (com persistência local).
-- **Framework de IA:** LangChain.
-- **API:** FastAPI + Uvicorn.
-- **Interface:** React (chat e painel admin).
+- **LLM (Ollama / Llama 3.2 1B):** O "cérebro" que gera as respostas. Roda localmente para garantir privacidade e funcionar em máquinas com pouca RAM (como notebooks de 4GB), sem depender de internet ou APIs pagas.
+- **Embeddings (nomic-embed-text):** Transforma textos e perguntas em vetores numéricos, permitindo que a IA entenda o *significado* das palavras.
+- **Banco Vetorial (ChromaDB):** Armazena os vetores e faz a busca semântica rápida. É aqui que o sistema encontra o contexto certo antes de responder (Retrieval).
+- **Framework (LangChain):** A união do sistema. Ele pega a pergunta, busca no ChromaDB, monta o prompt e envia para o LLM.
+- **API (FastAPI + Uvicorn):** Cria o servidor que recebe as mensagens do front-end e processa toda a lógica do RAG no back-end.
+- **Interface (React + Tailwind):** O site da cafeteria e o chat. Consome a API em tempo real e inclui o Painel Administrativo para gerenciar gatos, produtos e adoções.
 
 ---
 
