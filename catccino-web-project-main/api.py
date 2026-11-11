@@ -29,7 +29,6 @@ vectorstore = Chroma(
     embedding_function=embeddings
 )
 
-# Aumentamos para k=4 para buscar mais informações no banco
 retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 llm = ChatOllama(model="llama3.2:1b", temperature=0.1)
@@ -39,36 +38,103 @@ class Pergunta(BaseModel):
     mensagem: str
     qtd_gatos: int = 0
 
+# Função auxiliar para verificar se a pergunta tem a ver com o Catccino
+def pergunta_e_sobre_catccino(texto):
+    palavras_chave = [
+        "catccino", "café", "cafe", "cardápio", "cardapio", "bebida", "comida", 
+        "gato", "gatinho", "adoção", "adocao", "adotar", "ong", "horário", "horario", 
+        "funcionamento", "latte", "cappuccino", "expresso", "pingado", "chocolate", 
+        "chá", "cha", "bolo", "cookie", "pão", "pao", "queijo", "croissant", 
+        "brownie", "misto", "empada", "sonho", "preço", "preco", "custa", "aberto", 
+        "fechado", "endereço", "endereco", "localização", "localizacao", "lactose", 
+        "leite", "vegetal", "oi", "olá", "ola", "bom dia", "boa tarde", "boa noite", 
+        "tchau", "até logo", "ate logo", "sair",
+        "segunda", "terça", "terca", "quarta", "quinta", "sexta", "sábado", "sabado", "domingo",
+        "sim", "não", "nao",
+        "pix", "pagamento", "cartão", "cartao", "débito", "debito", "crédito", "credito"
+    ]
+    texto_lower = texto.lower()
+    return any(palavra in texto_lower for palavra in palavras_chave)
+
 # 3. Cria a rota (endpoint)
 @app.post("/chat")
 async def chat(pergunta: Pergunta):
     try:
         # Pega a hora atual do computador
         # hora_atual = datetime.now().hour
-        hora_atual = 10  # Fixo para testar
+
+        hora_atual = 10 # testar de manhã
+        # hora_atual = 16 # testar de tarde
+        # hora_atual = 18 # testar de noite
 
         # REGRA DE NEGÓCIO: Loja fechada
         if hora_atual < 7 or hora_atual >= 17:
             return {
-                "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h!"
+                "resposta": "Desculpe, nosso horário de funcionamento já encerrou por hoje (funcionamos das 7h às 17h). Volte amanhã a partir das 7h!",
+                "loja_fechada": True
             }
 
-        # REGRA: Resposta fixa para adoção (ignora o banco antigo)
-        if "adotar" in pergunta.mensagem.lower() or "adoção" in pergunta.mensagem.lower():
+        # Verifica se a pergunta tem a ver com o Catccino
+        if not pergunta_e_sobre_catccino(pergunta.mensagem):
             return {
-                "resposta": "Para adotar um gatinho, você precisa ter mais de 18 anos e preencher o formulário de adoção. A ONG entrará em contato em até 48h."
+                "resposta": "Desculpe, não tenho informações sobre isso. Sou a assistente do Catccino e só posso ajudar com dúvidas sobre a nossa cafeteria, cardápio ou adoção de gatinhos.",
+                "loja_fechada": False
+            }
+
+        # REGRA: Saudação + pedido de café/comida
+        if ("bom dia" in pergunta.mensagem.lower() or "boa tarde" in pergunta.mensagem.lower() or "olá" in pergunta.mensagem.lower()) and ("café" in pergunta.mensagem.lower() or "gostaria" in pergunta.mensagem.lower() or "comida" in pergunta.mensagem.lower()):
+            return {
+                "resposta": "Há uma porção de variedades de comidas e cafés no nosso cardápio, venha dar uma conferida!",
+                "loja_fechada": False
+            }
+
+        # REGRA: Respostas curtas (sim/não)
+        if pergunta.mensagem.lower().strip() in ["sim", "não", "nao"]:
+            return {
+                "resposta": "Entendi! Como posso ajudar você com o Catccino hoje?",
+                "loja_fechada": False
+            }
+        
+        # REGRA DE EMERGÊNCIA: Perguntas sobre nomes de gatos
+        if "chamar" in pergunta.mensagem.lower() and ("gato" in pergunta.mensagem.lower() or "gata" in pergunta.mensagem.lower()):
+            return {
+                "resposta": "Desculpe, não tenho informações sobre isso. Sou a assistente do Catccino e só posso ajudar com dúvidas sobre a nossa cafeteria, cardápio ou adoção de gatinhos.",
+                "loja_fechada": False
+            }
+
+        # REGRA: Resposta fixa para adoção
+        if "adotar" in pergunta.mensagem.lower() or "adoção" in pergunta.mensagem.lower() or "adocao" in pergunta.mensagem.lower():
+            return {
+                "resposta": "Para adotar um gatinho, você precisa ter mais de 18 anos e preencher o formulário de adoção. A ONG entrará em contato em até 48h.",
+                "loja_fechada": False
             }
 
         # REGRA: Horário de funcionamento
         if "horário" in pergunta.mensagem.lower() or "horario" in pergunta.mensagem.lower() or "funcionamento" in pergunta.mensagem.lower():
             return {
-                "resposta": "O Catccino funciona de terça-feira a domingo, das 07:00 às 17:00."
+                "resposta": "O Catccino funciona de terça-feira a domingo, das 07:00 às 17:00.",
+                "loja_fechada": False
+            }
+
+        # REGRA: Funcionamento aos domingos e segundas
+        if "segunda" in pergunta.mensagem.lower() or "domingo" in pergunta.mensagem.lower():
+            return {
+                "resposta": "O Catccino funciona de terça-feira a domingo, das 07:00 às 17:00. Portanto, às segundas-feiras estamos fechados.",
+                "loja_fechada": False
             }
 
         # REGRA: Preço do Latte Gatinho
         if "latte" in pergunta.mensagem.lower() or "gatinho" in pergunta.mensagem.lower():
             return {
-                "resposta": "O Latte Gatinho custa R$ 15,00 e é a nossa bebida mais pedida! Ele tem uma arte no café em formato de patinha."
+                "resposta": "O Latte Gatinho custa R$ 15,00 e é a nossa bebida mais pedida! Ele tem uma arte no café em formato de patinha.",
+                "loja_fechada": False
+            }
+
+        # REGRA: Formas de pagamento
+        if "pix" in pergunta.mensagem.lower() or "pagamento" in pergunta.mensagem.lower() or "cartão" in pergunta.mensagem.lower() or "cartao" in pergunta.mensagem.lower() or "débito" in pergunta.mensagem.lower() or "debito" in pergunta.mensagem.lower() or "crédito" in pergunta.mensagem.lower() or "credito" in pergunta.mensagem.lower():
+            return {
+                "resposta": "Aceitamos PIX (nossa chave é catccino@hotmail.com), cartão de débito e cartão de crédito.",
+                "loja_fechada": False
             }
 
         # Prompt criado DENTRO da função para conseguir ler o qtd_gatos
@@ -78,7 +144,7 @@ async def chat(pergunta: Pergunta):
             "NUNCA utilize emojis em suas respostas. Responda apenas com texto puro. "
 
             "REGRAS DE CONVERSA: "
-            "1. Se o usuário disser 'oi', 'olá' ou 'bom dia', responda APENAS com uma saudação amigável (ex: 'Olá! Como posso ajudar?'). NÃO adicione despedidas. "
+            "1. Se o usuário disser APENAS 'oi', 'olá' ou 'bom dia' (sem mais nenhuma pergunta), responda APENAS com uma saudação amigável (ex: 'Olá! Como posso ajudar?'). NÃO faça perguntas extras e NÃO puxe assunto sobre gatos ou adoção. "
             "2. Se o usuário disser 'tchau', 'até logo' ou 'até mais', responda APENAS com uma despedida (ex: 'Até logo! Volte sempre.'). NÃO adicione saudações. "
             "3. Se o usuário fizer qualquer outra pergunta, NÃO use saudações ou despedidas, vá direto ao ponto. "
 
@@ -90,11 +156,6 @@ async def chat(pergunta: Pergunta):
 
             "REGRA DE ITENS INEXISTENTES: Se o usuário perguntar por um item específico (ex: refrigerante, pizza, hambúrguer, suco) e esse item NÃO estiver listado no contexto do cardápio, responda EXATAMENTE: 'Não, não temos esse alimento ou essa bebida disponível no cardápio do Catccino.' NUNCA invente produtos que não estão no cardápio. "
 
-            "REGRA DE OURO PARA PERGUNTAS ALEATÓRIAS: "
-            "Se a pergunta do usuário não tiver NENHUMA relação com o Catccino, com café, com o cardápio ou com os gatinhos (por exemplo: 'O que é uma vaca?', 'Quem descobriu o Brasil?'), você deve responder EXATAMENTE a seguinte frase: "
-            "'Desculpe, não tenho informações sobre isso. Sou a assistente do Catccino e só posso ajudar com dúvidas sobre a nossa cafeteria, cardápio ou adoção de gatinhos.' "
-            "NÃO tente adivinhar a resposta, NÃO fale sobre gatinhos ou adoção se a pergunta não for sobre isso. "
-
             "Use o contexto abaixo para responder. "
             "Contexto:\n{context}"
         )
@@ -104,13 +165,11 @@ async def chat(pergunta: Pergunta):
             ("human", "{input}"),
         ])
 
-        # Recria a chain com o prompt atualizado
         question_answer_chain = create_stuff_documents_chain(llm, prompt)
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
-        # Roda a IA
         resposta = rag_chain.invoke({"input": pergunta.mensagem})
-        return {"resposta": resposta['answer']}
+        return {"resposta": resposta['answer'], "loja_fechada": False}
         
     except Exception as e:
         return {"erro": str(e)}

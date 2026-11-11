@@ -1,18 +1,28 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext.jsx"; // <-- Importa o useAuth
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  // Inicializa o estado tentando pegar do localStorage. Se não tiver, começa vazio.
+  const { isAuthenticated } = useAuth(); // <-- Pega o status de login
+  
   const [itens, setItens] = useState(() => {
     const carrinhoSalvo = localStorage.getItem("catccino_cart");
     return carrinhoSalvo ? JSON.parse(carrinhoSalvo) : [];
   });
 
-  // Sempre que o 'itens' mudar, salva no localStorage
+  // Sempre que os itens mudarem, salva no localStorage
   useEffect(() => {
     localStorage.setItem("catccino_cart", JSON.stringify(itens));
   }, [itens]);
+
+  // NOVO: Se o usuário deslogar, limpa o carrinho
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setItens([]); // Limpa os itens da memória do React
+      localStorage.removeItem("catccino_cart"); // Limpa do navegador
+    }
+  }, [isAuthenticated]);
 
   const adicionarItem = (produto) => {
     setItens(prev => {

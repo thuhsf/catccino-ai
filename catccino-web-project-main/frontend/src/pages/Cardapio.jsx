@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext.jsx"; // <-- Importação do Carrinho
+import { useCart } from "../context/CartContext.jsx";
 
-// Dados dos produtos com as imagens mapeadas
-const PRODUTOS = [
+const PRODUTOS_INICIAIS = [
   // Bebidas
   { id: 1, nome: "Café Expresso", preco: 5.00, desc: "Grãos 100% arábica, encorpado e aromático.", cat: "Bebidas", img: "/cafe-expresso.jpg" },
   { id: 2, nome: "Cappuccino Tradicional", preco: 12.00, desc: "Leite vaporizado, cacau e canela.", cat: "Bebidas", img: "/cappuccino-trad.jpg" },
@@ -31,12 +30,17 @@ const PRODUTOS = [
 export default function Cardapio() {
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
   const [mensagemErro, setMensagemErro] = useState("");
+  const [produtos, setProdutos] = useState([]);
 
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
-  // Puxa a função de adicionar item do nosso CartContext
   const { adicionarItem } = useCart(); 
+
+  // Carrega os produtos iniciais + os do admin
+  useEffect(() => {
+    const salvos = JSON.parse(localStorage.getItem("catccino_produtos") || "[]");
+    setProdutos([...PRODUTOS_INICIAIS, ...salvos]);
+  }, []);
 
   function handleAdd(produto) {
     if (!isAuthenticated) {
@@ -44,20 +48,18 @@ export default function Cardapio() {
       setTimeout(() => setMensagemErro(""), 4000);
       return;
     }
-    
     adicionarItem(produto);
   }
 
   const produtosFiltrados = categoriaAtiva === "Todos" 
-    ? PRODUTOS 
-    : PRODUTOS.filter(p => p.cat === categoriaAtiva);
+    ? produtos 
+    : produtos.filter(p => p.cat === categoriaAtiva);
     
   const produtosOrdenados = [...produtosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-10">
       
-      {/* BANNER COM IMAGEM DE FUNDO */}
       <div 
         className="relative mb-10 flex flex-col justify-end overflow-hidden rounded-[20px] p-8 text-white min-h-[250px]"
         style={{
@@ -69,35 +71,26 @@ export default function Cardapio() {
         <div className="absolute inset-0 bg-black/50"></div> 
         
         <div className="relative z-10">
-          <h2 
-            className="font-display text-3xl font-bold mb-2 bg-transparent" 
-            style={{ color: "#e6ccb2", backgroundColor: "transparent" }}
-          > 
+          <h2 className="font-display text-3xl font-bold mb-2 bg-transparent" style={{ color: "#e6ccb2", backgroundColor: "transparent" }}> 
             Café fresquinho, companhia felina e muito amor.
           </h2>
-          
           <p className="mt-2 max-w-md text-sm text-white">
             Descubra os sabores do Catccino. Do café quentinho ao cookie crocante, tudo feito com muito amor.
           </p>
         </div>
       </div>
 
-      {/* ALERTA FLUTUANTE (Usado tanto para erro de login quanto para sucesso no carrinho) */}
       {mensagemErro && (
-        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 rounded-lg px-6 py-3 text-white shadow-lg font-semibold animate-bounce ${
-          mensagemErro.includes("adicionado") ? "bg-green-600" : "bg-red-600"
-        }`}>
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-red-600 px-6 py-3 text-white shadow-lg font-semibold animate-bounce">
           {mensagemErro}
         </div>
       )}
 
-      {/* Título do Cardápio */}
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-bold text-ink mb-2">Nosso Cardápio</h1>
         <p className="text-ink-soft">Tudo fresquinho, direto da cozinha para a sua mesa.</p>
       </div>
 
-      {/* Filtros de Categoria */}
       <div className="mb-8 flex justify-center gap-3">
         {["Todos", "Bebidas", "Comidas"].map((cat) => (
           <button
@@ -114,36 +107,24 @@ export default function Cardapio() {
         ))}
       </div>
 
-      {/* Lista de Produtos */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         {produtosOrdenados.map((produto) => (
           <div key={produto.id} className="flex flex-col rounded-2xl bg-white shadow-sm border border-line transition-transform hover:-translate-y-1 overflow-hidden">
             
-            {/* FOTO DO PRODUTO */}
             <div className="h-40 w-full bg-cream-2 flex items-center justify-center">
               {produto.img ? (
-                <img 
-                  src={produto.img} 
-                  alt={produto.nome} 
-                  className="w-full h-full object-cover" 
-                />
+                <img src={produto.img} alt={produto.nome} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-4xl">☕</span>
               )}
             </div>
 
-            {/* INFORMAÇÕES DO PRODUTO */}
             <div className="p-6 flex flex-col flex-1">
               <h3 className="font-display text-xl font-bold text-ink mb-2">{produto.nome}</h3>
               <p className="text-sm text-ink-soft mb-4 flex-1">{produto.desc}</p>
               <div className="flex items-center justify-between mt-auto">
                 <span className="font-bold text-coffee text-lg">R$ {produto.preco.toFixed(2)}</span>
-                
-                {/* BOTÃO ADICIONAR COM O PRODUTO SENDO PASSADO COMO PARÂMETRO */}
-                <button 
-                  onClick={() => handleAdd(produto)} 
-                  className="rounded-lg bg-caramel px-4 py-2 text-sm font-bold text-white hover:bg-coffee transition-colors cursor-pointer"
-                >
+                <button onClick={() => handleAdd(produto)} className="rounded-lg bg-caramel px-4 py-2 text-sm font-bold text-white hover:bg-coffee transition-colors cursor-pointer">
                   Adicionar pedido
                 </button>
               </div>

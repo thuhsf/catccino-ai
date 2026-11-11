@@ -37,8 +37,9 @@ export function AuthProvider({ children }) {
     return res.customer;
   }, []);
 
-  const logout = useCallback(() => {
+    const logout = useCallback(() => {
     setSession({ token: null, customer: null });
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   }, []);
 
   const value = {

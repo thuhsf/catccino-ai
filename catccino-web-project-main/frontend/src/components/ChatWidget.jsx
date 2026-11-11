@@ -20,6 +20,7 @@ export function ChatWidget() {
   const [historico, setHistorico] = useState([MENSAGEM_INICIAL]);
   const [carregando, setCarregando] = useState(false);
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
+  const [lojaFechada, setLojaFechada] = useState(false); // <-- Estado dentro do componente
   
   const navigate = useNavigate();
 
@@ -39,7 +40,14 @@ export function ChatWidget() {
 
       const respostaIA = await Promise.race([aiApi.chat(texto, GATOS.length), timeout]);
       
-      // Proteção: garante que a resposta nunca seja undefined
+      // Verifica se a resposta é a mensagem de loja fechada
+      const textoResposta = String(respostaIA).toLowerCase();
+      if (textoResposta.includes("horário de funcionamento já encerrou") || textoResposta.includes("loja está fechada")) {
+        setLojaFechada(true);
+      } else {
+        setLojaFechada(false);
+      }
+
       setHistorico((prev) => [...prev, { role: "assistant", content: respostaIA || "Desculpe, não consegui gerar uma resposta." }]);
     } catch (error) {
       console.error(error);
@@ -93,13 +101,9 @@ export function ChatWidget() {
           {/* Histórico de Mensagens */}
           <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-cream/30">
             {historico.map((msg, index) => {
-              // PROTEÇÃO: Garante que a pergunta existe e converte para minúscula
               const perguntaUsuario = (historico[index - 1]?.content || "").toLowerCase();
-              
-              // PROTEÇÃO: Garante que a resposta existe e converte para minúscula
               const textoResposta = (msg.content || "").toLowerCase();
               
-              // Verifica se a pergunta é sobre o menu
               const perguntaSobreMenu = perguntaUsuario.includes("cardápio") || 
                                         perguntaUsuario.includes("menu") || 
                                         perguntaUsuario.includes("café") || 
@@ -110,7 +114,6 @@ export function ChatWidget() {
                                         perguntaUsuario.includes("lactose") ||
                                         (msg.role === "assistant" && textoResposta.includes("conferida"));
 
-              // Verifica se a pergunta é sobre adoção
               const perguntaSobreGatos = perguntaUsuario.includes("adoção") || 
                                          perguntaUsuario.includes("adotar") ||
                                          perguntaUsuario.includes("ong") ||
@@ -126,12 +129,12 @@ export function ChatWidget() {
                       : "self-start bg-white text-ink border border-line rounded-2xl rounded-tl-sm"
                   }`}
                 >
-                  {/* Mostra o conteúdo com proteção */}
                   {msg.content || "..."}
                   
                   {/* BOTÃO "VER GATINHOS" */}
                   {msg.role === "assistant" && 
                    index > 0 && 
+                   !lojaFechada && // <-- Esconde se a loja estiver fechada
                    perguntaSobreGatos && (
                     <button
                       onClick={() => {
@@ -147,6 +150,7 @@ export function ChatWidget() {
                   {/* BOTÃO "CONHECER O MENU" */}
                   {msg.role === "assistant" && 
                    index > 0 && 
+                   !lojaFechada && // <-- Esconde se a loja estiver fechada
                    perguntaSobreMenu && (
                     <button
                       onClick={() => {

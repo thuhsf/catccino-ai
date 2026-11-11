@@ -4,12 +4,16 @@ import { GATOS } from "../data/gatos.js";
 
 export default function FormularioAdocao() {
   const { id } = useParams(); 
+  const [gato, setGato] = useState(null);
   
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
-
-  const gato = GATOS.find(g => g.id === Number(id));
+    
+    // Busca o gato no localStorage (gatos criados pelo admin) primeiro
+    const salvos = JSON.parse(localStorage.getItem("catccino_gatos") || "[]");
+    const gatoEncontrado = salvos.find(g => g.id === Number(id)) || GATOS.find(g => g.id === Number(id));
+    setGato(gatoEncontrado);
+  }, [id]);
 
   const [form, setForm] = useState({
     nome: "", email: "", telefone: "", cpf: "", idade: "",
@@ -19,17 +23,13 @@ export default function FormularioAdocao() {
   });
   
   const [enviado, setEnviado] = useState(false);
-
-  // Estado para a mensagem de erro flutuante
   const [mensagemErro, setMensagemErro] = useState("");
 
-  // 1. Função para campos normais (Nome, Email, Endereço, etc)
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
-  // 2. Função para aplicar as máscaras (Telefone, CPF, CEP)
   function handleMask(e) {
     const { name, value } = e.target;
     let formatado = value;
@@ -56,12 +56,29 @@ export default function FormularioAdocao() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    // Verifica se a idade é menor que 18 e mostra o alerta
     const idadeNumerica = parseInt(form.idade, 10);
     if (idadeNumerica < 18) {
       setMensagemErro("Você precisa ter 18 anos ou mais para adotar um gatinho.");
       setTimeout(() => setMensagemErro(""), 4000);
       return; 
+    }
+
+    // 1. Salva os dados do formulário no localStorage
+    const formulariosSalvos = JSON.parse(localStorage.getItem("catccino_formularios") || "[]");
+    const novoFormulario = {
+      id: Date.now(),
+      gatoId: gato.id,
+      gatoNome: gato.nome,
+      data: new Date().toISOString(),
+      dados: form,
+      status: "Pendente"
+    };
+    localStorage.setItem("catccino_formularios", JSON.stringify([...formulariosSalvos, novoFormulario]));
+
+    // 2. Salva o ID do gato como "solicitado"
+    const solicitados = JSON.parse(localStorage.getItem("catccino_adocoes_solicitadas") || "[]");
+    if (!solicitados.includes(gato.id)) {
+      localStorage.setItem("catccino_adocoes_solicitadas", JSON.stringify([...solicitados, gato.id]));
     }
 
     setTimeout(() => {
@@ -80,9 +97,9 @@ export default function FormularioAdocao() {
   if (enviado) {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
-        <h1 className="font-display text-3xl font-bold text-ink mb-4">Formulário enviado com sucesso! 🐈</h1>
+        <h1 className="font-display text-3xl font-bold text-ink mb-4">Formulário enviado com sucesso!</h1>
         <p className="text-ink-soft mb-8 text-lg">
-          Após o envio, entraremos em contato em até 48h para prosseguir com o processo.
+          Após o envio, a ONG parceira analisará sua solicitação e entrará em contato em até 48h.
         </p>
         <Link to="/adocao" className="bg-coffee text-white px-6 py-3 rounded-lg font-bold hover:bg-coffee-dark transition-colors inline-block">
           Voltar para a lista de gatinhos
@@ -114,7 +131,6 @@ export default function FormularioAdocao() {
 
         <h2 className="font-display text-2xl font-bold text-ink mb-6">Formulário de adoção</h2>
         
-        {/* Alerta flutuante de erro */}
         {mensagemErro && (
           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-red-600 px-6 py-3 text-white shadow-lg font-semibold animate-bounce">
             {mensagemErro}
@@ -123,7 +139,6 @@ export default function FormularioAdocao() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           
-          {/* 1. DADOS PESSOAIS */}
           <fieldset className="border border-line p-6 rounded-2xl">
             <legend className="text-lg font-bold text-coffee px-2">1. Dados pessoais</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -143,33 +158,19 @@ export default function FormularioAdocao() {
                 <label className="block text-sm font-semibold mb-1">CPF <span className="text-red-500">*</span></label>
                 <input required type="text" name="cpf" placeholder="000.000.000-00" value={form.cpf} onChange={handleMask} className="w-full border border-line rounded-lg p-3 bg-cream/50" />
               </div>
-              
-              {/* CAMPO DE IDADE ATUALIZADO COM SELECT E AVISO */}
               <div>
                 <label className="block text-sm font-semibold mb-1">Idade <span className="text-red-500">*</span></label>
-                <select 
-                  required 
-                  name="idade" 
-                  value={form.idade} 
-                  onChange={handleChange} 
-                  className="w-full border border-line rounded-lg p-3 bg-cream/50 cursor-pointer focus:outline-none focus:border-coffee focus:ring-1 focus:ring-coffee"
-                >
+                <select required name="idade" value={form.idade} onChange={handleChange} className="w-full border border-line rounded-lg p-3 bg-cream/50 cursor-pointer">
                   <option value="" disabled>Selecione sua idade</option>
                   {Array.from({ length: 83 }, (_, i) => i + 18).map((idade) => (
-                    <option key={idade} value={idade}>
-                      {idade} anos
-                    </option>
+                    <option key={idade} value={idade}>{idade} anos</option>
                   ))}
                 </select>
-                <span className="text-xs text-red-500 mt-1 block font-medium">
-                  Atenção: só poderá adotar quem tiver 18 anos ou mais.
-                </span>
+                <span className="text-xs text-red-500 mt-1 block font-medium">Atenção: só poderá adotar quem tiver 18 anos ou mais.</span>
               </div>
-              
             </div>
           </fieldset>
 
-          {/* 2. ENDEREÇO */}
           <fieldset className="border border-line p-6 rounded-2xl">
             <legend className="text-lg font-bold text-coffee px-2">2. Endereço</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -192,7 +193,6 @@ export default function FormularioAdocao() {
             </div>
           </fieldset>
 
-          {/* 3. EXPERIÊNCIA COM PETS */}
           <fieldset className="border border-line p-6 rounded-2xl">
             <legend className="text-lg font-bold text-coffee px-2">3. Experiência com pets</legend>
             <div className="flex flex-col gap-4 mt-2">
@@ -224,38 +224,24 @@ export default function FormularioAdocao() {
             </div>
           </fieldset>
 
-          {/* 4. TERMO DE COMPROMISSO */}
           <fieldset className="border border-line p-6 rounded-2xl bg-cream-2/30">
             <legend className="text-lg font-bold text-coffee px-2">4. Termo de Compromisso</legend>
-            
             <label className="flex items-start gap-3 cursor-pointer p-2 mt-2">
-              <input 
-                type="checkbox" 
-                name="concordaTermos" 
-                checked={form.concordaTermos} 
-                onChange={handleChange} 
-                required 
-                className="mt-1 w-5 h-5 accent-coffee cursor-pointer"
-              />
+              <input type="checkbox" name="concordaTermos" checked={form.concordaTermos} onChange={handleChange} required className="mt-1 w-5 h-5 accent-coffee cursor-pointer" />
               <span className="text-sm text-ink">
                 Concordo com os termos de adoção responsável e me comprometo a cuidar bem do pet. <span className="text-red-500">*</span>
               </span>
             </label>
           </fieldset>
 
-          {/* BOTÃO FINAL */}
           <div className="flex flex-col items-center mt-4">
-            <button 
-              type="submit" 
-              className="w-full bg-coffee text-white py-4 rounded-lg text-lg font-bold hover:bg-coffee-dark transition-transform hover:-translate-y-1 hover:shadow-warm cursor-pointer"
-            >
+            <button type="submit" className="w-full bg-coffee text-white py-4 rounded-lg text-lg font-bold hover:bg-coffee-dark transition-transform hover:-translate-y-1 hover:shadow-warm cursor-pointer">
               Enviar formulário de adoção
             </button>
             <p className="text-sm text-ink-soft mt-4 text-center">
-              Após o envio, entraremos em contato em até 48h para prosseguir com o processo.
+              Após o envio, a ONG parceira analisará sua solicitação e entrará em contato em até 48h.
             </p>
           </div>
-
         </form>
       </div>
     </div>
