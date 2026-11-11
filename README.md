@@ -62,7 +62,7 @@ O projeto foi dividido em duas camadas que se comunicam via API:
 - Node.js (versão 18+) instalado.
 - [Ollama](https://ollama.com/) instalado e rodando na máquina.
 
-### 🪟 Passo a passo (Windows)
+### Passo a passo (Windows)
 
 1. **Clone o repositório:**
    ```powershell
@@ -100,7 +100,7 @@ O projeto foi dividido em duas camadas que se comunicam via API:
    npm run dev
    ```
 
-### 🐧 Passo a passo (Linux)
+### Passo a passo (Linux)
 
 1. **Instale as dependências do sistema (se necessário):**
    ```bash
