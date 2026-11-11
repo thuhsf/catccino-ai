@@ -44,7 +44,7 @@ O projeto foi dividido em duas camadas que se comunicam via API:
 
 ---
 
-- ## 🛠️ Tecnologias Utilizadas
+- ## Tecnologias Utilizadas
 
 - **LLM (Ollama / Llama 3.2 1B):** O "cérebro" que gera as respostas. Roda localmente para garantir privacidade e funcionar em máquinas com pouca RAM (como notebooks de 4GB), sem depender de internet ou APIs pagas.
 - **Embeddings (nomic-embed-text):** Transforma textos e perguntas em vetores numéricos, permitindo que a IA entenda o *significado* das palavras.
